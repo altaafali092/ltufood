@@ -25,11 +25,10 @@ class FoodCategroyStoreRequest extends FormRequest
     {
         return [
             'title'=>['required','string','max:255'],
-
             'slug' => ['required', 'alpha_dash', Rule::unique('food_categories', 'slug')->withoutTrashed()],
-            'image'=>['required','string','max:255'],
-            'description'=>['required','string','max:255'],
-            'status'=>['required','boolean'],
+             'image' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'description'=>['nullable','string','max:255'],
+           
         ];
     }
 }

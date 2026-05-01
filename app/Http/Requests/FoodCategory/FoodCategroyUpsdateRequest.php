@@ -13,7 +13,7 @@ class FoodCategroyUpsdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -25,10 +25,15 @@ class FoodCategroyUpsdateRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'alpha_dash', Rule::unique('food_categories', 'slug')->ignore($this->id)->withoutTrashed()],
-            'image' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string', 'max:255'],
-            'status' => ['required', 'boolean'],
+             'slug' => [
+                'required',
+                'alpha_dash',
+                Rule::unique('food_categories', 'slug')
+                  ->ignore($this->route('food_category')->id)
+                    ->withoutTrashed(),
+            ],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'description' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

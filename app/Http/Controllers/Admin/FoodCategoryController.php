@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FoodCategory\FoodCategroyStoreRequest;
+use App\Http\Requests\FoodCategory\FoodCategroyUpsdateRequest;
 use App\Models\FoodCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,7 @@ class FoodCategoryController extends Controller
     public function index()
     {
         $foodCategories = FoodCategory::latest()->get();
-        return Inertia::render('Admin/FoodCategory/Index',[
+        return Inertia::render('Admin/FoodCategory/Index', [
             'foodCategories' => $foodCategories,
         ]);
     }
@@ -26,7 +27,7 @@ class FoodCategoryController extends Controller
      */
     public function create()
     {
-     return "create";
+        return Inertia::render('Admin/FoodCategory/Create');
     }
 
     /**
@@ -36,7 +37,7 @@ class FoodCategoryController extends Controller
     {
         FoodCategory::create($request->validated());
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category created.')]);
-           return redirect()->route('admin.food-category.index');
+        return to_route('admin.food-categories.index');
     }
 
     /**
@@ -45,7 +46,7 @@ class FoodCategoryController extends Controller
     public function show(string $id)
     {
         $foodCategory = FoodCategory::find($id);
-        return Inertia::render('Admin/FoodCategory/Show',[
+        return Inertia::render('Admin/FoodCategory/Show', [
             'foodCategory' => $foodCategory,
         ]);
     }
@@ -53,10 +54,9 @@ class FoodCategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(FoodCategory $foodCategory)
     {
-        $foodCategory = FoodCategory::find($id);
-        return Inertia::render('Admin/FoodCategory/Edit',[
+        return Inertia::render('Admin/FoodCategory/Edit', [
             'foodCategory' => $foodCategory,
         ]);
     }
@@ -64,22 +64,21 @@ class FoodCategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(FoodCategroyUpsdateRequest $request, FoodCategory $foodCategory)
     {
-        $foodCategory = FoodCategory::find($id);
+      
         $foodCategory->update($request->validated());
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category updated.')]);
-           return redirect()->route('admin.food-category.index');
+        return to_route('admin.food-categories.index');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(FoodCategory $foodCategory)
     {
-        $foodCategory = FoodCategory::find($id);
         $foodCategory->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category deleted.')]);
-           return redirect()->route('admin.food-category.index');
+        return redirect()->route('admin.food-category.index');
     }
 }
