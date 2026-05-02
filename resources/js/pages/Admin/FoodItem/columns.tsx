@@ -2,15 +2,22 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Link, router } from "@inertiajs/react";
 import { EyeIcon, Pencil, Trash } from "lucide-react";
-import { FoodCategory } from "@/types/admin/FoodCategory";
-import { destroy, edit, show } from "@/routes/admin/food-categories";
 
-export const columns: ColumnDef<FoodCategory>[] = [
+
+import { FoodItem } from "@/types/admin/FoodItem";
+import { destroy, edit, show } from "@/routes/admin/food-items";
+
+export const columns: ColumnDef<FoodItem>[] = [
     {
         accessorKey: "id",
         header: "Id",
         cell: ({ row }) => row.index + 1,
     },
+    {
+        accessorKey: "food_category_id",
+        header: "Category",
+    },
+
     {
         accessorKey: "image",
         header: "Image",
@@ -32,26 +39,26 @@ export const columns: ColumnDef<FoodCategory>[] = [
         accessorKey: "title",
         header: "Title",
     },
-    {
-        accessorKey: "slug",
-        header: "Slug",
-    },
+    // {
+    //     accessorKey: "slug",
+    //     header: "Slug",
+    // },
 
     {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => {
-            const foodCategory = row.original;
+            const foodItem = row.original;
 
             return (
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={edit(foodCategory.id).url}>
+                        <Link href={edit(foodItem.id).url}>
                             <Pencil className="h-4 w-4" />
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={show(foodCategory.id).url}>
+                        <Link href={show(foodItem.id).url}>
                             <EyeIcon className="h-4 w-4" />
                         </Link>
                     </Button>
@@ -66,7 +73,7 @@ export const columns: ColumnDef<FoodCategory>[] = [
                                 )
                             ) {
                                 router.delete(
-                                    destroy(foodCategory.id).url,
+                                    destroy(foodItem.id).url,
                                     {
                                         preserveScroll: true,
                                     }

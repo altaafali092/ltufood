@@ -7,6 +7,7 @@ use App\Http\Requests\FoodCategory\FoodCategroyStoreRequest;
 use App\Http\Requests\FoodCategory\FoodCategroyUpsdateRequest;
 use App\Models\FoodCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class FoodCategoryController extends Controller
@@ -43,9 +44,9 @@ class FoodCategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(FoodCategory $foodCategory)
     {
-        $foodCategory = FoodCategory::find($id);
+       
         return Inertia::render('Admin/FoodCategory/Show', [
             'foodCategory' => $foodCategory,
         ]);
@@ -66,7 +67,7 @@ class FoodCategoryController extends Controller
      */
     public function update(FoodCategroyUpsdateRequest $request, FoodCategory $foodCategory)
     {
-      
+
         $foodCategory->update($request->validated());
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category updated.')]);
         return to_route('admin.food-categories.index');
@@ -77,8 +78,10 @@ class FoodCategoryController extends Controller
      */
     public function destroy(FoodCategory $foodCategory)
     {
+
+         deleteFiles($foodCategory->image);
         $foodCategory->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category deleted.')]);
-        return redirect()->route('admin.food-category.index');
+        return back();
     }
 }

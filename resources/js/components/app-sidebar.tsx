@@ -17,6 +17,7 @@ import {
 import type { NavItem } from '@/types';
 import { dashboard } from '@/routes/admin';
 import { index  as foodCategoryIndex } from '@/routes/admin/food-categories';
+import { index as foodItemIndex } from '@/routes/admin/food-items';
 
 const mainNavItems: NavItem[] = [
     {
@@ -28,6 +29,11 @@ const mainNavItems: NavItem[] = [
         title: 'FoodCategory',
         href: foodCategoryIndex(),
         icon: CakeIcon,
+    },
+    {
+        title: 'FoodItem',
+        href: foodItemIndex(),
+        icon:CakeIcon,
     },
 ];
 

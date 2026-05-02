@@ -6,12 +6,13 @@ use App\Concerns\FileTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class FoodCategory extends Model
 {
-    use HasFactory, SoftDeletes,FileTrait;
+    use HasFactory, SoftDeletes, FileTrait;
     protected $table = 'food_categories';
     protected $fillable = [
         'title',
@@ -24,8 +25,12 @@ class FoodCategory extends Model
         'status' => 'boolean',
     ];
 
-    public function image():Attribute
+    public function image(): Attribute
     {
-        return $this->castingFile(defaultPath:'FoodCategory');
+        return $this->castingFile(defaultPath: 'FoodCategory');
+    }
+    public function foodItems(): HasMany
+    {
+        return $this->hasMany(FoodItem::class);
     }
 }
