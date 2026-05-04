@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\FoodCategory\FoodCategroyStoreRequest;
 use App\Http\Requests\FoodCategory\FoodCategroyUpsdateRequest;
 use App\Models\FoodCategory;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -46,7 +45,7 @@ class FoodCategoryController extends Controller
      */
     public function show(FoodCategory $foodCategory)
     {
-       
+
         return Inertia::render('Admin/FoodCategory/Show', [
             'foodCategory' => $foodCategory,
         ]);
@@ -79,7 +78,7 @@ class FoodCategoryController extends Controller
     public function destroy(FoodCategory $foodCategory)
     {
 
-         deleteFiles($foodCategory->image);
+        deleteFiles($foodCategory->image);
         $foodCategory->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Category deleted.')]);
         return back();

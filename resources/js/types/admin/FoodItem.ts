@@ -8,6 +8,7 @@ export type FoodItem={
     description:string;
     price:number;
     images:string[];
+    formatted_images:string[];
     status:boolean;
     popularity_score:number;
     tags:string[];

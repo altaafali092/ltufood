@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, CakeIcon, FolderGit2, LayoutGrid } from 'lucide-react';
+import { BookOpen, CakeIcon, FolderGit2, LayoutGrid, Table2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -18,12 +18,18 @@ import type { NavItem } from '@/types';
 import { dashboard } from '@/routes/admin';
 import { index  as foodCategoryIndex } from '@/routes/admin/food-categories';
 import { index as foodItemIndex } from '@/routes/admin/food-items';
+import { index as tableIndex } from '@/routes/admin/tables';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Tables',
+        href: tableIndex(),
+        icon: Table2,
     },
     {
         title: 'FoodCategory',

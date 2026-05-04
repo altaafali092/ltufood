@@ -13,26 +13,29 @@ export const columns: ColumnDef<FoodItem>[] = [
         header: "Id",
         cell: ({ row }) => row.index + 1,
     },
-    {
-        accessorKey: "food_category_id",
-        header: "Category",
-    },
+   
 
     {
-        accessorKey: "image",
-        header: "Image",
+        accessorKey: "formatted_images",
+        header: "Images",
         cell: ({ row }) => {
-            const image = row.getValue("image") as string;
-            return image ? (
+            const images = row.getValue("formatted_images") as string[];
+            if (!images || images.length === 0) {
+                return <div className="h-32 w-32 rounded bg-gray-200" />;
+            }
+            const randomIndex = Math.floor(Math.random() * images.length);
+            return (
                 <img
-                    src={image}
+                    src={images[randomIndex]}
                     alt={row.getValue("title")}
                     className="h-20 w-20 object-fill rounded"
                 />
-            ) : (
-                <div className="h-32 w-32 rounded bg-gray-200" />
             );
         },
+    },
+     {
+        accessorKey: "food_category.title",
+        header: "Category",
     },
 
     {
