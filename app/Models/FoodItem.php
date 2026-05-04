@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\FileTrait;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,11 +13,9 @@ use Illuminate\Support\Facades\Storage;
 
 class FoodItem extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,FileTrait;
 
     protected $with = ['foodCategory'];
-
-    protected $appends = ['formatted_images'];
 
     protected $fillable = [
         'food_category_id',

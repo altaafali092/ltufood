@@ -16,10 +16,10 @@ export const columns: ColumnDef<FoodItem>[] = [
    
 
     {
-        accessorKey: "formatted_images",
+        accessorKey: "images",
         header: "Images",
         cell: ({ row }) => {
-            const images = row.getValue("formatted_images") as string[];
+            const images = row.getValue("images") as string[];
             if (!images || images.length === 0) {
                 return <div className="h-32 w-32 rounded bg-gray-200" />;
             }

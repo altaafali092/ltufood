@@ -40,7 +40,6 @@ class FoodItemController extends Controller
     {
         FoodItem::create($request->validated());
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Food item created.')]);
-
         return to_route('admin.food-items.index');
     }
 
