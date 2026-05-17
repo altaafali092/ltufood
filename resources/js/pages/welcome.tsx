@@ -155,14 +155,17 @@ export default function Welcome() {
     const n = FOOD_ITEMS
       .map((i) => i.foodCategory?.title)
       .filter((title): title is string => Boolean(title));
+
     return ["All", ...Array.from(new Set(n))];
   }, []);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
+
     return FOOD_ITEMS.filter(item => {
       const inCat = category === "All" || item.foodCategory?.title === category;
       const inS = !term || item.title.toLowerCase().includes(term) || item.description?.toLowerCase().includes(term);
+
       return inCat && inS;
     });
   }, [search, category]);
@@ -175,12 +178,22 @@ export default function Welcome() {
   const removeFromCart = (id: number) =>
     setCart((p) => {
       const u = { ...p };
-      u[id]?.qty > 1 ? (u[id] = { ...u[id], qty: u[id].qty - 1 }) : delete u[id];
+
+      if (u[id]?.qty > 1) {
+        u[id] = { ...u[id], qty: u[id].qty - 1 };
+      } else {
+        delete u[id];
+      }
+
       return u;
     });
   const totalItems = Object.values(cart).reduce((s, i) => s + i.qty, 0);
   const subtotal = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
-  const placeOrder = () => { setOrdered(true); setTimeout(() => { setCart({}); setOrdered(false); setCartOpen(false); }, 3200); };
+  const placeOrder = () => {
+ setOrdered(true); setTimeout(() => {
+ setCart({}); setOrdered(false); setCartOpen(false); 
+}, 3200); 
+};
 
   return (
     <div style={{ minHeight: "100vh", background: "#080c10", fontFamily: "'DM Sans',sans-serif", color: "#e2e8f0" }}>
@@ -374,6 +387,7 @@ export default function Welcome() {
               {filtered.map((item, idx) => {
                 const style = cs(item.foodCategory?.title);
                 const inCart = cart[item.id];
+
                 return (
                   <article key={item.id} className="card fade-up" style={{ animationDelay: `${.04 * idx}s` }}>
                     {/* emoji zone */}
