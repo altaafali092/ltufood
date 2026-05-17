@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
 
-type MenuCategory = {
-  id: number;
-  title: string;
-};
-
+type MenuCategory = { id: number; title: string };
 type MenuItem = {
   id: number;
   title: string;
@@ -14,14 +10,10 @@ type MenuItem = {
   foodCategory?: MenuCategory;
   emoji: string;
 };
-
-type CartItem = MenuItem & {
-  qty: number;
-};
-
+type CartItem = MenuItem & { qty: number };
 type CartState = Record<number, CartItem>;
 
-/* ─── Fake data ────────────────────────────────────────────────────────── */
+/* ─── Data ─────────────────────────────────────────────────────────────── */
 const FOOD_ITEMS: MenuItem[] = [
   { id: 1, title: "Momo (Steam)", description: "Hand-folded dumplings stuffed with spiced minced chicken, ginger & garlic, served with tomato achar.", price: 180, popularity_score: 98, foodCategory: { id: 1, title: "Nepali" }, emoji: "🥟" },
   { id: 2, title: "Dal Bhat Set", description: "Traditional set — steamed rice, lentil soup, seasonal vegetable curry, pickles & papad.", price: 250, popularity_score: 95, foodCategory: { id: 1, title: "Nepali" }, emoji: "🍛" },
@@ -40,24 +32,21 @@ const FOOD_ITEMS: MenuItem[] = [
 const money = (price: number) =>
   new Intl.NumberFormat("en-NP", { style: "currency", currency: "NPR", maximumFractionDigits: 0 }).format(Number(price || 0));
 
-const CAT_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
-  Nepali: { bg: "rgba(251,146,60,.12)", text: "#fb923c", dot: "#fb923c" },
-  Chinese: { bg: "rgba(248,113,113,.12)", text: "#f87171", dot: "#f87171" },
-  Italian: { bg: "rgba(74,222,128,.12)", text: "#4ade80", dot: "#4ade80" },
-  "Fast Food": { bg: "rgba(250,204,21,.12)", text: "#facc15", dot: "#facc15" },
-  Drinks: { bg: "rgba(96,165,250,.12)", text: "#60a5fa", dot: "#60a5fa" },
-  Desserts: { bg: "rgba(232,121,249,.12)", text: "#e879f9", dot: "#e879f9" },
+/* Category badge colours — using Tailwind arbitrary values */
+const CAT_CLASS: Record<string, { pill: string; dot: string }> = {
+  Nepali: { pill: "bg-orange-400/10 text-orange-400", dot: "bg-orange-400" },
+  Chinese: { pill: "bg-red-400/10 text-red-400", dot: "bg-red-400" },
+  Italian: { pill: "bg-green-400/10 text-green-400", dot: "bg-green-400" },
+  "Fast Food": { pill: "bg-yellow-400/10 text-yellow-400", dot: "bg-yellow-400" },
+  Drinks: { pill: "bg-blue-400/10 text-blue-400", dot: "bg-blue-400" },
+  Desserts: { pill: "bg-fuchsia-400/10 text-fuchsia-400", dot: "bg-fuchsia-400" },
 };
-const cs = (cat?: string) => CAT_STYLE[cat ?? ""] ?? { bg: "rgba(148,163,184,.12)", text: "#94a3b8", dot: "#94a3b8" };
+const cs = (cat?: string) =>
+  CAT_CLASS[cat ?? ""] ?? { pill: "bg-slate-400/10 text-slate-400", dot: "bg-slate-400" };
 
-/* ─── Cart Drawer ────────────────────────────────────────────────────────── */
+/* ─── Cart Drawer ──────────────────────────────────────────────────────── */
 function CartDrawer({
-  cart,
-  onAdd,
-  onRemove,
-  onClose,
-  onOrder,
-  ordered,
+  cart, onAdd, onRemove, onClose, onOrder, ordered,
 }: {
   cart: CartState;
   onAdd: (item: MenuItem) => void;
@@ -68,70 +57,95 @@ function CartDrawer({
 }) {
   const items = Object.values(cart);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
-  const service = Math.round(subtotal * .10);
+  const service = Math.round(subtotal * 0.1);
   const total = subtotal + service;
+  const totalQty = items.reduce((s, i) => s + i.qty, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex">
+      {/* backdrop */}
       <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="drawer-panel">
+
+      {/* panel */}
+      <div className="w-full max-w-[440px] md:max-w-[440px] bg-[#0d1117] border-l border-white/[0.08] flex flex-col">
 
         {/* header */}
-        <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(255,255,255,.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.08]">
           <div>
-            <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#6bffb8", marginBottom: 4 }}>Your Order</p>
-            <p style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 22, fontWeight: 700, color: "#fff" }}>
-              {items.reduce((s, i) => s + i.qty, 0)} item{items.reduce((s, i) => s + i.qty, 0) !== 1 ? "s" : ""}
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[#6bffb8] mb-1 font-['DM_Sans',sans-serif]">Your Order</p>
+            <p className="font-['Playfair_Display',Georgia,serif] text-[22px] font-bold text-white">
+              {totalQty} item{totalQty !== 1 ? "s" : ""}
             </p>
           </div>
-          <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,.07)", color: "#94a3b8", border: "none", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-white/[0.07] text-slate-400 border-none cursor-pointer text-base flex items-center justify-center hover:bg-white/10 transition-colors"
+          >
+            ✕
+          </button>
         </div>
 
         {ordered ? (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32, textAlign: "center" }}>
-            <div style={{ fontSize: 64, marginBottom: 16, animation: "bounce 1s infinite" }}>✅</div>
-            <p style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, fontWeight: 700, color: "#fff", marginBottom: 8 }}>Order Placed!</p>
-            <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "#64748b" }}>Your food is being prepared. Sit back & relax 🎉</p>
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">
+            <div className="text-[64px] mb-4 animate-bounce">✅</div>
+            <p className="font-['Playfair_Display',Georgia,serif] text-[26px] font-bold text-white mb-2">Order Placed!</p>
+            <p className="text-[13px] text-slate-500">Your food is being prepared. Sit back & relax 🎉</p>
           </div>
         ) : (
           <>
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
-              {items.length === 0 && (
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 0", textAlign: "center" }}>
-                  <p style={{ fontSize: 48, marginBottom: 12 }}>🛒</p>
-                  <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "#475569" }}>Your cart is empty.<br />Add something delicious!</p>
+            {/* items list */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-2.5">
+              {items.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
+                  <p className="text-5xl mb-3">🛒</p>
+                  <p className="text-[13px] text-slate-500">Your cart is empty.<br />Add something delicious!</p>
                 </div>
-              )}
-              {items.map(item => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 14, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)" }}>
-                  <span style={{ fontSize: 26 }}>{item.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{item.title}</p>
-                    <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11, color: "#475569", marginTop: 2 }}>{money(item.price)} each</p>
+              ) : items.map(item => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 px-3.5 py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.07]"
+                >
+                  <span className="text-[26px]">{item.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white truncate">{item.title}</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{money(item.price)} each</p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <button onClick={() => onRemove(item.id)} style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,.08)", color: "#fff", border: "none", cursor: "pointer", fontSize: 15, fontWeight: 700 }}>−</button>
-                    <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 700, color: "#fff", width: 18, textAlign: "center" }}>{item.qty}</span>
-                    <button onClick={() => onAdd(item)} style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#6bffb8,#00d4aa)", color: "#0d1117", border: "none", cursor: "pointer", fontSize: 15, fontWeight: 700 }}>+</button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => onRemove(item.id)}
+                      className="w-7 h-7 rounded-full bg-white/[0.08] text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-white/20 transition-colors"
+                    >−</button>
+                    <span className="text-[13px] font-bold text-white w-[18px] text-center">{item.qty}</span>
+                    <button
+                      onClick={() => onAdd(item)}
+                      className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
+                    >+</button>
                   </div>
-                  <span style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 13, fontWeight: 700, color: "#6bffb8", width: 70, textAlign: "right", flexShrink: 0 }}>{money(item.price * item.qty)}</span>
+                  <span className="text-[13px] font-bold text-[#6bffb8] w-[70px] text-right shrink-0">
+                    {money(item.price * item.qty)}
+                  </span>
                 </div>
               ))}
             </div>
 
+            {/* totals + CTA */}
             {items.length > 0 && (
-              <div style={{ padding: "16px 24px 24px", borderTop: "1px solid rgba(255,255,255,.08)" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+              <div className="px-6 pb-6 pt-4 border-t border-white/[0.08]">
+                <div className="flex flex-col gap-2 mb-4">
                   {([["Subtotal", subtotal], ["Service charge (10%)", service]] as [string, number][]).map(([label, val]) => (
-                    <div key={label} style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans',sans-serif", fontSize: 13, color: "#64748b" }}>
+                    <div key={label} className="flex justify-between text-[13px] text-slate-500">
                       <span>{label}</span><span>{money(val)}</span>
                     </div>
                   ))}
-                  <div style={{ display: "flex", justifyContent: "space-between", fontFamily: "'DM Sans',sans-serif", fontSize: 15, fontWeight: 700, color: "#fff", paddingTop: 10, borderTop: "1px solid rgba(255,255,255,.08)" }}>
-                    <span>Total</span><span style={{ color: "#6bffb8" }}>{money(total)}</span>
+                  <div className="flex justify-between text-[15px] font-bold text-white pt-2.5 border-t border-white/[0.08]">
+                    <span>Total</span>
+                    <span className="text-[#6bffb8]">{money(total)}</span>
                   </div>
                 </div>
-                <button onClick={onOrder} style={{ width: "100%", padding: "14px 0", borderRadius: 14, fontFamily: "'DM Sans',sans-serif", fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", background: "linear-gradient(135deg,#6bffb8,#00d4aa)", color: "#0d1117", border: "none", cursor: "pointer" }}>
+                <button
+                  onClick={onOrder}
+                  className="w-full py-3.5 rounded-[14px] bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-bold uppercase tracking-[0.1em] border-none cursor-pointer hover:opacity-90 transition-opacity"
+                >
                   Place Order
                 </button>
               </div>
@@ -143,7 +157,7 @@ function CartDrawer({
   );
 }
 
-/* ─── Main ────────────────────────────────────────────────────────────────── */
+/* ─── Main ─────────────────────────────────────────────────────────────── */
 export default function Welcome() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -152,129 +166,87 @@ export default function Welcome() {
   const [ordered, setOrdered] = useState(false);
 
   const categories = useMemo(() => {
-    const n = FOOD_ITEMS
-      .map((i) => i.foodCategory?.title)
-      .filter((title): title is string => Boolean(title));
-
-    return ["All", ...Array.from(new Set(n))];
+    const names = FOOD_ITEMS
+      .map(i => i.foodCategory?.title)
+      .filter((t): t is string => Boolean(t));
+    return ["All", ...Array.from(new Set(names))];
   }, []);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-
     return FOOD_ITEMS.filter(item => {
       const inCat = category === "All" || item.foodCategory?.title === category;
       const inS = !term || item.title.toLowerCase().includes(term) || item.description?.toLowerCase().includes(term);
-
       return inCat && inS;
     });
   }, [search, category]);
 
-  const popular = useMemo(() => [...FOOD_ITEMS].sort((a, b) => (b.popularity_score ?? 0) - (a.popularity_score ?? 0)).slice(0, 4), []);
+  const popular = useMemo(
+    () => [...FOOD_ITEMS].sort((a, b) => (b.popularity_score ?? 0) - (a.popularity_score ?? 0)).slice(0, 4),
+    [],
+  );
   const hero = popular[0];
 
   const addToCart = (item: MenuItem) =>
-    setCart((p) => ({ ...p, [item.id]: { ...item, qty: (p[item.id]?.qty || 0) + 1 } }));
+    setCart(p => ({ ...p, [item.id]: { ...item, qty: (p[item.id]?.qty || 0) + 1 } }));
   const removeFromCart = (id: number) =>
-    setCart((p) => {
+    setCart(p => {
       const u = { ...p };
-
-      if (u[id]?.qty > 1) {
-        u[id] = { ...u[id], qty: u[id].qty - 1 };
-      } else {
-        delete u[id];
-      }
-
+      if (u[id]?.qty > 1) { u[id] = { ...u[id], qty: u[id].qty - 1 }; }
+      else { delete u[id]; }
       return u;
     });
+
   const totalItems = Object.values(cart).reduce((s, i) => s + i.qty, 0);
   const subtotal = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
+
   const placeOrder = () => {
- setOrdered(true); setTimeout(() => {
- setCart({}); setOrdered(false); setCartOpen(false); 
-}, 3200); 
-};
+    setOrdered(true);
+    setTimeout(() => { setCart({}); setOrdered(false); setCartOpen(false); }, 3200);
+  };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080c10", fontFamily: "'DM Sans',sans-serif", color: "#e2e8f0" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-        *{box-sizing:border-box;margin:0;padding:0;}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-        .fade-up{animation:fadeUp .5s ease both;}
-        .card{transition:transform .22s ease,box-shadow .22s ease;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden;}
-        .card:hover{transform:translateY(-5px);box-shadow:0 20px 56px rgba(107,255,184,.09);}
-        .pill-btn{border:none;cursor:pointer;border-radius:9999px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .18s ease;}
-        .pill-btn:hover{opacity:.88;}
-        .icon-btn{border:none;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;transition:all .18s ease;}
-        .icon-btn:hover{transform:scale(1.1);}
-        ::-webkit-scrollbar{width:5px;height:5px;}
-        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px;}
-        .drawer-panel{width:min(440px,100vw);background:#0d1117;border-left:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;}
-        .page-shell{max-width:1200px;margin:0 auto;padding:36px 24px 80px;}
-        .header-inner{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
-        .header-actions{display:flex;align-items:center;gap:10px;}
-        .hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;margin-bottom:40px;}
-        .hero-card{position:relative;min-height:400px;border-radius:28px;overflow:hidden;background:linear-gradient(145deg,#0e1f14,#0a1118);border:1px solid rgba(107,255,184,.14);padding:36px;display:flex;flex-direction:column;justify-content:flex-end;grid-column:span 2;}
-        .stats-card{border-radius:22px;padding:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:10px;}
-        .popular-card{border-radius:22px;padding:22px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);grid-column:span 2;}
-        .popular-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;}
-        .filter-panel{border-radius:22px;padding:22px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);margin-bottom:28px;}
-        .filter-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;}
-        .search-box{position:relative;width:min(280px,100%);}
-        .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;}
-        .floating-cart{position:fixed;bottom:24px;left:0;right:0;display:flex;justify-content:center;padding:0 16px;z-index:40;}
-        .floating-cart-btn{display:flex;align-items:center;gap:14px;padding:14px 24px;border-radius:18px;border:none;cursor:pointer;background:linear-gradient(135deg,#6bffb8,#00d4aa);color:#0d1117;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;width:100%;max-width:440px;box-shadow:0 16px 48px rgba(107,255,184,.32);}
-        @media (max-width: 768px){
-          .page-shell{padding:20px 16px 88px;}
-          .header-inner{padding:12px 16px;align-items:stretch;flex-direction:column;}
-          .header-actions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
-          .header-chip,.header-cart-button{width:100%;justify-content:center;padding-left:10px !important;padding-right:10px !important;}
-          .hero-grid{grid-template-columns:1fr;gap:14px;margin-bottom:24px;}
-          .hero-card,.popular-card{grid-column:auto;padding:22px;border-radius:22px;}
-          .hero-card{min-height:320px;}
-          .hero-copy{max-width:none !important;}
-          .hero-title{font-size:34px !important;}
-          .hero-emoji{font-size:52px !important;}
-          .stats-card{padding:18px;border-radius:18px;}
-          .popular-grid{grid-template-columns:1fr;gap:12px;}
-          .filter-panel{padding:18px;border-radius:18px;margin-bottom:22px;}
-          .filter-top{align-items:stretch;gap:14px;}
-          .search-box{width:100%;}
-          .menu-grid{grid-template-columns:1fr;gap:14px;}
-          .menu-emoji-zone{height:132px !important;}
-          .menu-emoji{font-size:56px !important;}
-          .floating-cart{bottom:12px;padding:0 12px;}
-          .floating-cart-btn{max-width:none;padding:13px 16px;border-radius:16px;gap:12px;}
-          .drawer-panel{width:100vw;border-left:none;}
-        }
-      `}</style>
+    <div className="min-h-screen bg-[#080c10] text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+
+      {/* Google Fonts — only link tag, no style block */}
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+      />
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(8,12,16,.94)", backdropFilter: "blur(18px)", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
-        <div className="header-inner">
-          {/* logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 42, height: 42, borderRadius: 14, background: "linear-gradient(135deg,#6bffb8,#00d4aa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🍽️</div>
+      <header className="sticky top-0 z-40 bg-[#080c10]/95 backdrop-blur-[18px] border-b border-white/[0.06]">
+        <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch max-md:px-4 max-md:py-3">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-[42px] h-[42px] rounded-[14px] bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] flex items-center justify-center text-xl shrink-0">
+              🍽️
+            </div>
             <div>
-              <p style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>LTU Food</p>
-              <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: "#6bffb8", marginTop: 2 }}>Scan · Choose · Order</p>
+              <p className="text-xl font-bold text-white leading-none" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                LTU Food
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-[#6bffb8] mt-0.5">
+                Scan · Choose · Order
+              </p>
             </div>
           </div>
-          {/* nav */}
-          <div className="header-actions">
-            <button className="pill-btn header-chip" style={{ background: "transparent", color: "#94a3b8", padding: "8px 14px" }}>Log in</button>
-            <button className="pill-btn header-chip" style={{ background: "rgba(107,255,184,.1)", color: "#6bffb8", border: "1px solid rgba(107,255,184,.22)", padding: "8px 18px" }}>Register</button>
+
+          {/* Nav */}
+          <div className="flex items-center gap-2.5 max-md:grid max-md:grid-cols-3">
+            <button className="rounded-full bg-transparent text-slate-400 px-3.5 py-2 text-[13px] font-semibold cursor-pointer hover:text-white transition-colors border-none max-md:justify-center max-md:flex max-md:items-center">
+              Log in
+            </button>
+            <button className="rounded-full bg-[#6bffb8]/10 text-[#6bffb8] border border-[#6bffb8]/22 px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-[#6bffb8]/20 transition-colors max-md:justify-center max-md:flex max-md:items-center">
+              Register
+            </button>
             <button
-              className="pill-btn header-cart-button"
               onClick={() => setCartOpen(true)}
-              style={{
-                background: totalItems > 0 ? "linear-gradient(135deg,#6bffb8,#00d4aa)" : "rgba(255,255,255,.07)",
-                color: totalItems > 0 ? "#0d1117" : "#94a3b8",
-                border: totalItems > 0 ? "none" : "1px solid rgba(255,255,255,.1)",
-                padding: "9px 18px", display: "flex", alignItems: "center", gap: 7
-              }}
+              className={`rounded-full px-4 py-2 text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all border-none
+                ${totalItems > 0
+                  ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
+                  : "bg-white/[0.07] text-slate-400 border border-white/10"
+                }`}
             >
               🛒 {totalItems > 0 ? `${totalItems} item${totalItems > 1 ? "s" : ""}` : "Cart"}
             </button>
@@ -282,61 +254,67 @@ export default function Welcome() {
         </div>
       </header>
 
+      <main className="max-w-[1200px] mx-auto px-6 pb-20 pt-9 max-md:px-4 max-md:pb-24 max-md:pt-5">
 
-   
+        {/* ── HERO GRID ───────────────────────────────────────── */}
+        <section className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 mb-10 max-md:grid-cols-1 max-md:gap-3.5 max-md:mb-6 animate-[fadeUp_.5s_ease_both]">
 
-      <main className="page-shell">
-
-        {/* ── HERO ────────────────────────────────────────────── */}
-        <section className="hero-grid fade-up">
-          {/* hero card */}
-          <div className="hero-card">
+          {/* Hero card */}
+          <div className="relative min-h-[400px] max-md:min-h-[320px] rounded-[28px] max-md:rounded-[22px] overflow-hidden bg-gradient-to-br from-[#0e1f14] to-[#0a1118] border border-[#6bffb8]/14 p-9 max-md:p-5 flex flex-col justify-end col-span-2 max-md:col-span-1">
             {/* blobs */}
-            <div style={{ position: "absolute", top: -80, right: -80, width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle,rgba(107,255,184,.18),transparent)", filter: "blur(40px)" }} />
-            <div style={{ position: "absolute", bottom: -60, left: -40, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(0,212,170,.12),transparent)", filter: "blur(32px)" }} />
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(107,255,184,.12)", border: "1px solid rgba(107,255,184,.22)", borderRadius: 99, padding: "5px 14px", marginBottom: 20 }}>
-                <span style={{ fontSize: 11 }}>✦</span>
-                <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.12em", color: "#6bffb8" }}>Today's favourite</span>
+            <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle,rgba(107,255,184,0.18),transparent)] blur-[40px]" />
+            <div className="absolute -bottom-16 -left-10 w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(0,212,170,0.12),transparent)] blur-[32px]" />
+            <div className="relative z-[1]">
+              <div className="inline-flex items-center gap-1.5 bg-[#6bffb8]/12 border border-[#6bffb8]/22 rounded-full px-3.5 py-1 mb-5">
+                <span className="text-[11px]">✦</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6bffb8]">Today's favourite</span>
               </div>
-              <div className="hero-emoji" style={{ fontSize: 72, marginBottom: 16, lineHeight: 1 }}>{hero.emoji}</div>
-              <h1 className="hero-title" style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: "clamp(32px,5vw,52px)", fontWeight: 900, color: "#fff", lineHeight: 1.1, marginBottom: 12 }}>{hero.title}</h1>
-              <p className="hero-copy" style={{ fontSize: 14, lineHeight: 1.7, color: "#64748b", maxWidth: 440, marginBottom: 24 }}>{hero.description}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                <span style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, fontWeight: 700, color: "#6bffb8" }}>{money(hero.price)}</span>
-                <button className="pill-btn" onClick={() => addToCart(hero)}
-                  style={{ background: "linear-gradient(135deg,#6bffb8,#00d4aa)", color: "#0d1117", padding: "12px 24px", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>
+              <div className="text-[72px] max-md:text-[52px] leading-none mb-4">{hero.emoji}</div>
+              <h1 className="text-[clamp(32px,5vw,52px)] font-black text-white leading-[1.1] mb-3" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                {hero.title}
+              </h1>
+              <p className="text-sm leading-[1.7] text-slate-500 max-w-[440px] max-md:max-w-none mb-6">{hero.description}</p>
+              <div className="flex items-center gap-3.5 flex-wrap">
+                <span className="text-[26px] font-bold text-[#6bffb8]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                  {money(hero.price)}
+                </span>
+                <button
+                  onClick={() => addToCart(hero)}
+                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+                >
                   🛒 Add to order
                 </button>
               </div>
             </div>
           </div>
 
-          {/* stat card 1 */}
-          <div className="stats-card">
-            <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(107,255,184,.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>⚡</div>
-            <p style={{ fontWeight: 700, color: "#fff", fontSize: 16 }}>Instant ordering</p>
-            <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.6 }}>Browse the menu and place your order directly from this page — no waiting for staff.</p>
+          {/* Stat card 1 */}
+          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.04] border border-white/[0.07] flex flex-col gap-2.5">
+            <div className="w-[42px] h-[42px] rounded-[12px] bg-[#6bffb8]/10 flex items-center justify-center text-[22px]">⚡</div>
+            <p className="font-bold text-white text-base">Instant ordering</p>
+            <p className="text-xs text-slate-500 leading-[1.6]">Browse the menu and place your order directly from this page — no waiting for staff.</p>
           </div>
 
-          {/* stat card 2 */}
-          <div className="stats-card">
-            <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(250,204,21,.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🍴</div>
-            <p style={{ fontWeight: 700, color: "#fff", fontSize: 16 }}>{FOOD_ITEMS.length} dishes</p>
-            <p style={{ fontSize: 12, color: "#475569", lineHeight: 1.6 }}>{categories.length - 1} categories from Nepali classics to Italian comfort food and more.</p>
+          {/* Stat card 2 */}
+          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.04] border border-white/[0.07] flex flex-col gap-2.5">
+            <div className="w-[42px] h-[42px] rounded-[12px] bg-yellow-400/10 flex items-center justify-center text-[22px]">🍴</div>
+            <p className="font-bold text-white text-base">{FOOD_ITEMS.length} dishes</p>
+            <p className="text-xs text-slate-500 leading-[1.6]">{categories.length - 1} categories from Nepali classics to Italian comfort food and more.</p>
           </div>
 
-          {/* popular picks */}
-          <div className="popular-card">
-            <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#6bffb8", marginBottom: 18 }}>🔥 Popular picks</p>
-            <div className="popular-grid">
+          {/* Popular picks */}
+          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.04] border border-white/[0.07] col-span-2 max-md:col-span-1">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[#6bffb8] mb-4">🔥 Popular picks</p>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-md:grid-cols-1 gap-3.5 max-md:gap-3">
               {popular.map((item, i) => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 12, fontWeight: 700, color: "rgba(107,255,184,.4)", width: 22 }}>0{i + 1}</span>
-                  <span style={{ fontSize: 22 }}>{item.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{item.title}</p>
-                    <p style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>{money(item.price)}</p>
+                <div key={item.id} className="flex items-center gap-2.5">
+                  <span className="text-xs font-bold text-[#6bffb8]/40 w-[22px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                    0{i + 1}
+                  </span>
+                  <span className="text-[22px]">{item.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-white truncate">{item.title}</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">{money(item.price)}</p>
                   </div>
                 </div>
               ))}
@@ -345,29 +323,34 @@ export default function Welcome() {
         </section>
 
         {/* ── FILTER BAR ──────────────────────────────────────── */}
-        <section className="filter-panel fade-up" style={{ animationDelay: ".1s" }}>
-          <div className="filter-top">
+        <section className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.03] border border-white/[0.07] mb-7 max-md:mb-5 animate-[fadeUp_.5s_.1s_ease_both]">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3.5">
             <div>
-              <h2 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, fontWeight: 700, color: "#fff" }}>Full Menu</h2>
-              <p style={{ fontSize: 12, color: "#475569", marginTop: 4 }}>Filter by category · search what you crave</p>
+              <h2 className="text-[26px] font-bold text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Full Menu</h2>
+              <p className="text-xs text-slate-600 mt-1">Filter by category · search what you crave</p>
             </div>
-            <div className="search-box">
-              <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#475569" }}>🔍</span>
+            <div className="relative w-[min(280px,100%)] max-md:w-full">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-600">🔍</span>
               <input
-                value={search} onChange={e => setSearch(e.target.value)} placeholder="Search dishes…"
-                style={{ width: "100%", padding: "10px 14px 10px 40px", borderRadius: 12, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "#fff", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search dishes…"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-[12px] bg-white/[0.06] border border-white/10 text-white text-[13px] outline-none placeholder:text-slate-600"
+                style={{ fontFamily: "'DM Sans', sans-serif" }}
               />
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {categories.map(cat => (
-              <button key={cat} className="pill-btn" onClick={() => setCategory(cat)}
-                style={{
-                  padding: "7px 18px", whiteSpace: "nowrap",
-                  background: category === cat ? "linear-gradient(135deg,#6bffb8,#00d4aa)" : "rgba(255,255,255,.05)",
-                  color: category === cat ? "#0d1117" : "#94a3b8",
-                  border: category === cat ? "none" : "1px solid rgba(255,255,255,.08)"
-                }}>
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`rounded-full px-4 py-1.5 text-[13px] font-semibold whitespace-nowrap border-none cursor-pointer transition-all shrink-0
+                  ${category === cat
+                    ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
+                    : "bg-white/[0.05] text-slate-400 border border-white/[0.08] hover:text-white hover:bg-white/10"
+                  }`}
+              >
                 {cat}
               </button>
             ))}
@@ -375,72 +358,85 @@ export default function Welcome() {
         </section>
 
         {/* ── MENU GRID ───────────────────────────────────────── */}
-        <section className="fade-up" style={{ animationDelay: ".2s" }}>
+        <section className="animate-[fadeUp_.5s_.2s_ease_both]">
           {filtered.length === 0 ? (
-            <div style={{ borderRadius: 22, padding: "64px 24px", textAlign: "center", background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)" }}>
-              <p style={{ fontSize: 48, marginBottom: 12 }}>🍽️</p>
-              <p style={{ fontWeight: 700, color: "#fff", fontSize: 16, marginBottom: 6 }}>No dishes found</p>
-              <p style={{ fontSize: 13, color: "#475569" }}>Try a different category or search term.</p>
+            <div className="rounded-[22px] py-16 px-6 text-center bg-white/[0.03] border border-white/[0.07]">
+              <p className="text-5xl mb-3">🍽️</p>
+              <p className="font-bold text-white text-base mb-1.5">No dishes found</p>
+              <p className="text-[13px] text-slate-600">Try a different category or search term.</p>
             </div>
           ) : (
-            <div className="menu-grid">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] max-md:grid-cols-1 gap-[18px] max-md:gap-3.5">
               {filtered.map((item, idx) => {
-                const style = cs(item.foodCategory?.title);
+                const { pill, dot } = cs(item.foodCategory?.title);
                 const inCart = cart[item.id];
 
                 return (
-                  <article key={item.id} className="card fade-up" style={{ animationDelay: `${.04 * idx}s` }}>
-                    {/* emoji zone */}
-                    <div className="menu-emoji-zone" style={{
-                      position: "relative", height: 160, display: "flex", alignItems: "center", justifyContent: "center",
-                      background: `linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01))`
-                    }}>
-                      <span className="menu-emoji" style={{ fontSize: 72, lineHeight: 1, userSelect: "none" }}>{item.emoji}</span>
-                      {/* category */}
-                      <span style={{
-                        position: "absolute", top: 12, left: 12, padding: "4px 10px", borderRadius: 99, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                        background: style.bg, color: style.text, display: "flex", alignItems: "center", gap: 5
-                      }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: style.dot, display: "inline-block" }} />
+                  <article
+                    key={item.id}
+                    className="bg-white/[0.04] border border-white/[0.07] rounded-[20px] overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_56px_rgba(107,255,184,0.09)] transition-all duration-[220ms]"
+                    style={{ animationDelay: `${0.04 * idx}s` }}
+                  >
+                    {/* Emoji zone */}
+                    <div className="relative h-[160px] max-md:h-[132px] flex items-center justify-center bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
+                      <span className="text-[72px] max-md:text-[56px] leading-none select-none">{item.emoji}</span>
+
+                      {/* Category pill */}
+                      <span className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] ${pill}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full inline-block ${dot}`} />
                         {item.foodCategory?.title}
                       </span>
-                      {/* hot badge */}
+
+                      {/* Hot badge */}
                       {(item.popularity_score ?? 0) >= 85 && (
-                        <span style={{
-                          position: "absolute", top: 12, right: 12, padding: "4px 10px", borderRadius: 99, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                          background: "rgba(107,255,184,.1)", color: "#6bffb8", border: "1px solid rgba(107,255,184,.2)"
-                        }}>
+                        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#6bffb8] border border-[#6bffb8]/20">
                           🔥 Hot
                         </span>
                       )}
                     </div>
 
-                    {/* content */}
-                    <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                    {/* Content */}
+                    <div className="p-4 flex flex-col gap-2.5">
                       <div>
-                        <h3 style={{
-                          fontFamily: "'Playfair Display',Georgia,serif", fontSize: 17, fontWeight: 700, color: "#fff", lineHeight: 1.3,
-                          overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical"
-                        }}>{item.title}</h3>
-                        <p style={{
-                          fontSize: 12, lineHeight: 1.65, color: "#475569", marginTop: 6,
-                          overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical"
-                        }}>
+                        <h3
+                          className="text-[17px] font-bold text-white leading-[1.3] truncate"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {item.title}
+                        </h3>
+                        <p
+                          className="text-xs leading-[1.65] text-slate-600 mt-1.5 overflow-hidden"
+                          style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
+                        >
                           {item.description ?? "Freshly prepared for your table."}
                         </p>
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 4 }}>
-                        <span style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 18, fontWeight: 700, color: "#6bffb8" }}>{money(item.price)}</span>
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        <span
+                          className="text-[18px] font-bold text-[#6bffb8]"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {money(item.price)}
+                        </span>
+
                         {inCart ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                            <button className="icon-btn" onClick={() => removeFromCart(item.id)} style={{ width: 30, height: 30, background: "rgba(255,255,255,.08)", color: "#fff" }}>−</button>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", width: 18, textAlign: "center" }}>{inCart.qty}</span>
-                            <button className="icon-btn" onClick={() => addToCart(item)} style={{ width: 30, height: 30, background: "linear-gradient(135deg,#6bffb8,#00d4aa)", color: "#0d1117" }}>+</button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => removeFromCart(item.id)}
+                              className="w-[30px] h-[30px] rounded-full bg-white/[0.08] text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-white/20 transition-colors"
+                            >−</button>
+                            <span className="text-[13px] font-bold text-white w-[18px] text-center">{inCart.qty}</span>
+                            <button
+                              onClick={() => addToCart(item)}
+                              className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
+                            >+</button>
                           </div>
                         ) : (
-                          <button className="pill-btn" onClick={() => addToCart(item)}
-                            style={{ padding: "8px 16px", fontSize: 12, background: "rgba(107,255,184,.1)", color: "#6bffb8", border: "1px solid rgba(107,255,184,.22)" }}>
+                          <button
+                            onClick={() => addToCart(item)}
+                            className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
+                          >
                             + Add
                           </button>
                         )}
@@ -456,18 +452,31 @@ export default function Welcome() {
 
       {/* ── FLOATING CART BAR ──────────────────────────────────── */}
       {totalItems > 0 && !cartOpen && (
-        <div className="floating-cart">
-          <button onClick={() => setCartOpen(true)}
-            className="floating-cart-btn">
-            <span style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900 }}>{totalItems}</span>
-            <span style={{ flex: 1, textAlign: "left" }}>View your order</span>
-            <span style={{ fontWeight: 900 }}>{money(subtotal)}</span>
+        <div className="fixed bottom-6 max-md:bottom-3 left-0 right-0 flex justify-center px-4 max-md:px-3 z-40">
+          <button
+            onClick={() => setCartOpen(true)}
+            className="flex items-center gap-3.5 max-md:gap-3 px-6 py-3.5 max-md:px-4 max-md:py-3 rounded-[18px] max-md:rounded-[16px] border-none cursor-pointer bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-bold w-full max-w-[440px] max-md:max-w-none shadow-[0_16px_48px_rgba(107,255,184,0.32)] hover:opacity-95 transition-opacity"
+          >
+            <span className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center text-xs font-black shrink-0">
+              {totalItems}
+            </span>
+            <span className="flex-1 text-left">View your order</span>
+            <span className="font-black">{money(subtotal)}</span>
           </button>
         </div>
       )}
 
       {/* ── CART DRAWER ────────────────────────────────────────── */}
-      {cartOpen && <CartDrawer cart={cart} onAdd={addToCart} onRemove={removeFromCart} onClose={() => setCartOpen(false)} onOrder={placeOrder} ordered={ordered} />}
+      {cartOpen && (
+        <CartDrawer
+          cart={cart}
+          onAdd={addToCart}
+          onRemove={removeFromCart}
+          onClose={() => setCartOpen(false)}
+          onOrder={placeOrder}
+          ordered={ordered}
+        />
+      )}
     </div>
   );
 }
