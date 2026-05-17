@@ -185,6 +185,7 @@ export default function Welcome() {
     () => [...FOOD_ITEMS].sort((a, b) => (b.popularity_score ?? 0) - (a.popularity_score ?? 0)).slice(0, 4),
     [],
   );
+  
   const hero = popular[0];
 
   const addToCart = (item: MenuItem) =>
@@ -209,10 +210,7 @@ export default function Welcome() {
     <div className="min-h-screen bg-[#080c10] text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* Google Fonts — only link tag, no style block */}
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap"
-      />
+
 
       {/* ── HEADER ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-[#080c10]/95 backdrop-blur-[18px] border-b border-white/[0.06]">
@@ -264,7 +262,7 @@ export default function Welcome() {
             {/* blobs */}
             <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle,rgba(107,255,184,0.18),transparent)] blur-[40px]" />
             <div className="absolute -bottom-16 -left-10 w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(0,212,170,0.12),transparent)] blur-[32px]" />
-            <div className="relative z-[1]">
+            <div className="relative z-10]">
               <div className="inline-flex items-center gap-1.5 bg-[#6bffb8]/12 border border-[#6bffb8]/22 rounded-full px-3.5 py-1 mb-5">
                 <span className="text-[11px]">✦</span>
                 <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6bffb8]">Today's favourite</span>
