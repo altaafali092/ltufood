@@ -8,6 +8,7 @@ use Laravel\Fortify\Features;
 
 Route::get('/test',[FrontController::class,'test'])->name('test');
 Route::get('/', [FrontController::class, 'index'])->name('home');
+Route::get('food-item-detail/{foodItem:slug}',[FrontController::class,'foodItemDetail'])->name('foodItemDetail');
 Route::post('/orders', [OrderController::class, 'store'])->name('ordersStore');
 Route::get('/order/track/{order}', [OrderController::class, 'track'])->name('orderTrack');
 

@@ -17,5 +17,12 @@ class FrontController extends Controller
             'canRegister' => Features::enabled(Features::registration()),
         ]);
     }
+    public function foodItemDetail(FoodItem $foodItem)
+    {
+        $foodItem->load('subCategory');
+        return Inertia::render('Frontend/FoodItemDetail',[
+            'fooditem'=>$foodItem
+        ]);
+    }
 
 }

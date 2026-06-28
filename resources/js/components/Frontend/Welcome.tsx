@@ -5,6 +5,8 @@ import { FoodItem } from "@/types/frontend/Index";
 import FilterBar from "./FilterBar";
 import MenuGrid from "./MenuGrid";
 import { Button } from "../ui/button";
+import { Link } from "@inertiajs/react";
+import { foodItemDetail } from "@/routes";
 
 type CartItem = FoodItem & { qty: number };
 type CartState = Record<number, CartItem>;
@@ -284,25 +286,45 @@ export default function Welcome({ foodItems }: WelcomeProps) {
 
               {/* Popular picks */}
               <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] col-span-2 max-md:col-span-1">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8] mb-4">🔥 Popular picks</p>
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-md:grid-cols-1 gap-3.5 max-md:gap-3">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8] mb-4">
+                  🔥 Popular picks
+                </p>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-md:grid-cols-1 gap-4 max-md:gap-3.5">
                   {popular.map((item, i) => {
                     const img = itemImage(item);
                     return (
-                      <div key={item.id} className="flex items-center gap-2.5">
-                        <span className="text-xs font-bold text-[#6bffb8]/40 w-[22px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                      <Link
+                        key={item.id}
+                        href={foodItemDetail(item.slug)}
+                        className="flex items-center gap-2.5 group cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] p-1.5 -m-1.5 rounded-xl transition-colors duration-200"
+                      >
+                        {/* Rank Number */}
+                        <span
+                          className="text-xs font-bold text-slate-300 dark:text-[#6bffb8]/30 w-[22px] group-hover:text-emerald-500 dark:group-hover:text-[#6bffb8] transition-colors"
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
                           0{i + 1}
                         </span>
-                        <div className="w-9 h-9 shrink-0 overflow-hidden rounded-[8px] bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-[20px]">
-                          {img
-                            ? <img src={img} alt={item.title} className="h-full w-full object-cover" />
-                            : <span>{itemEmoji(item)}</span>}
+
+                        {/* Thumbnail Image Framework */}
+                        <div className="w-10 h-10 shrink-0 overflow-hidden rounded-xl bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-[20px] border border-black/[0.04] dark:border-white/[0.04] group-hover:scale-[1.03] transition-transform duration-300 ease-out">
+                          {img ? (
+                            <img src={img} alt={item.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="select-none transform group-hover:scale-110 transition-transform">{itemEmoji(item)}</span>
+                          )}
                         </div>
+
+                        {/* Label Metadata */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
-                          <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)}</p>
+                          <p className="text-[13px] font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-[#6bffb8] truncate transition-colors duration-150">
+                            {item.title}
+                          </p>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+                            {money(item.price)}
+                          </p>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
