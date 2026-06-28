@@ -1,39 +1,22 @@
 import { useMemo, useState } from "react";
 import { useAppearance } from "@/hooks/use-appearance";
+import Header from "./Header";
+import { FoodItem } from "@/types/frontend/Index";
 
-type MenuCategory = { id: number; title: string };
-type MenuItem = {
-  id: number;
-  title: string;
-  description: string;
-  price: number;
-  popularity_score: number;
-  foodCategory?: MenuCategory;
-  emoji: string;
-};
-type CartItem = MenuItem & { qty: number };
+type CartItem = FoodItem & { qty: number };
 type CartState = Record<number, CartItem>;
-
-/* ─── Data ─────────────────────────────────────────────────────────────── */
-const FOOD_ITEMS: MenuItem[] = [
-  { id: 1, title: "Momo (Steam)", description: "Hand-folded dumplings stuffed with spiced minced chicken, ginger & garlic, served with tomato achar.", price: 180, popularity_score: 98, foodCategory: { id: 1, title: "Nepali" }, emoji: "🥟" },
-  { id: 2, title: "Dal Bhat Set", description: "Traditional set — steamed rice, lentil soup, seasonal vegetable curry, pickles & papad.", price: 250, popularity_score: 95, foodCategory: { id: 1, title: "Nepali" }, emoji: "🍛" },
-  { id: 3, title: "Chowmein", description: "Stir-fried egg noodles with crunchy vegetables and house soy-chilli sauce.", price: 160, popularity_score: 88, foodCategory: { id: 2, title: "Chinese" }, emoji: "🍜" },
-  { id: 4, title: "Fried Rice", description: "Wok-tossed jasmine rice with egg, spring onions, sweet corn & sesame oil.", price: 170, popularity_score: 82, foodCategory: { id: 2, title: "Chinese" }, emoji: "🍚" },
-  { id: 5, title: "Margherita Pizza", description: "San Marzano tomato base, fresh mozzarella, basil leaves baked in a stone oven.", price: 420, popularity_score: 76, foodCategory: { id: 3, title: "Italian" }, emoji: "🍕" },
-  { id: 6, title: "Pasta Arrabiata", description: "Penne pasta in fiery tomato-chilli sauce with garlic and fresh parsley.", price: 350, popularity_score: 71, foodCategory: { id: 3, title: "Italian" }, emoji: "🍝" },
-  { id: 7, title: "Chicken Burger", description: "Crispy fried chicken thigh, pickled jalapeños, sriracha mayo on a toasted brioche bun.", price: 290, popularity_score: 85, foodCategory: { id: 4, title: "Fast Food" }, emoji: "🍔" },
-  { id: 8, title: "Loaded Fries", description: "Thick-cut fries, melted cheddar, crispy bacon bits, sour cream & chives.", price: 220, popularity_score: 79, foodCategory: { id: 4, title: "Fast Food" }, emoji: "🍟" },
-  { id: 9, title: "Masala Chai", description: "Spiced milk tea brewed with cardamom, ginger, cinnamon & Assam tea leaves.", price: 60, popularity_score: 91, foodCategory: { id: 5, title: "Drinks" }, emoji: "🍵" },
-  { id: 10, title: "Fresh Juice", description: "Cold-pressed seasonal fruit juice — orange, mango or mixed berry.", price: 120, popularity_score: 74, foodCategory: { id: 5, title: "Drinks" }, emoji: "🥤" },
-  { id: 11, title: "Thukpa", description: "Tibetan noodle soup with bone broth, tender vegetables and hand-rolled noodles.", price: 200, popularity_score: 87, foodCategory: { id: 1, title: "Nepali" }, emoji: "🍲" },
-  { id: 12, title: "Chocolate Lava Cake", description: "Warm dark-chocolate cake with a molten centre, served with a scoop of vanilla ice cream.", price: 280, popularity_score: 90, foodCategory: { id: 6, title: "Desserts" }, emoji: "🍫" },
-];
 
 const money = (price: number) =>
   new Intl.NumberFormat("en-NP", { style: "currency", currency: "NPR", maximumFractionDigits: 0 }).format(Number(price || 0));
 
-/* Category badge colours — using Tailwind arbitrary values */
+/* Pick the first available image for a dish, falling back to an emoji. */
+const itemImage = (item: FoodItem): string | null =>
+  Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
+
+const itemEmoji = (item: FoodItem): string =>
+  (item.tags?.find((t) => t) ?? "") as string || "🍽️";
+
+/* Category badge colours — keyed by sub-category title. */
 const CAT_CLASS: Record<string, { pill: string; dot: string }> = {
   Nepali: { pill: "bg-orange-400/10 text-orange-400", dot: "bg-orange-400" },
   Chinese: { pill: "bg-red-400/10 text-red-400", dot: "bg-red-400" },
@@ -50,7 +33,7 @@ function CartDrawer({
   cart, onAdd, onRemove, onClose, onOrder, ordered,
 }: {
   cart: CartState;
-  onAdd: (item: MenuItem) => void;
+  onAdd: (item: FoodItem) => void;
   onRemove: (id: number) => void;
   onClose: () => void;
   onOrder: () => void;
@@ -101,32 +84,39 @@ function CartDrawer({
                   <p className="text-5xl mb-3">🛒</p>
                   <p className="text-[13px] text-slate-500">Your cart is empty.<br />Add something delicious!</p>
                 </div>
-              ) : items.map(item => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 px-3.5 py-3 rounded-[14px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07]"
-                >
-                  <span className="text-[26px]">{item.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)} each</p>
+              ) : items.map(item => {
+                const img = itemImage(item);
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 px-3.5 py-3 rounded-[14px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07]"
+                  >
+                    <div className="w-9 h-9 shrink-0 overflow-hidden rounded-[8px] bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-[22px]">
+                      {img
+                        ? <img src={img} alt={item.title} className="h-full w-full object-cover" />
+                        : <span>{itemEmoji(item)}</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)} each</p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => onRemove(item.id)}
+                        className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
+                      >−</button>
+                      <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{item.qty}</span>
+                      <button
+                        onClick={() => onAdd(item)}
+                        className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
+                      >+</button>
+                    </div>
+                    <span className="text-[13px] font-bold text-[#00a37a] dark:text-[#6bffb8] w-[70px] text-right shrink-0">
+                      {money(item.price * item.qty)}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onRemove(item.id)}
-                      className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
-                    >−</button>
-                    <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{item.qty}</span>
-                    <button
-                      onClick={() => onAdd(item)}
-                      className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
-                    >+</button>
-                  </div>
-                  <span className="text-[13px] font-bold text-[#00a37a] dark:text-[#6bffb8] w-[70px] text-right shrink-0">
-                    {money(item.price * item.qty)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* totals + CTA */}
@@ -159,7 +149,12 @@ function CartDrawer({
 }
 
 /* ─── Main ─────────────────────────────────────────────────────────────── */
-export default function Welcome() {
+interface WelcomeProps {
+  foodItems: FoodItem[];
+  canRegister?: boolean;
+}
+
+export default function Welcome({ foodItems }: WelcomeProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [cart, setCart] = useState<CartState>({});
@@ -171,29 +166,38 @@ export default function Welcome() {
   const toggleTheme = () => updateAppearance(isDark ? "light" : "dark");
 
   const categories = useMemo(() => {
-    const names = FOOD_ITEMS
-      .map(i => i.foodCategory?.title)
-      .filter((t): t is string => Boolean(t));
+    const names = foodItems
+      .map(item => item.subCategory?.title)
+      .filter((title): title is string => Boolean(title));
     return ["All", ...Array.from(new Set(names))];
-  }, []);
+  }, [foodItems]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return FOOD_ITEMS.filter(item => {
-      const inCat = category === "All" || item.foodCategory?.title === category;
-      const inS = !term || item.title.toLowerCase().includes(term) || item.description?.toLowerCase().includes(term);
-      return inCat && inS;
-    });
-  }, [search, category]);
 
-  const popular = useMemo(
-    () => [...FOOD_ITEMS].sort((a, b) => (b.popularity_score ?? 0) - (a.popularity_score ?? 0)).slice(0, 4),
-    [],
-  );
+    return foodItems.filter(item => {
+      const inCategory =
+        category === "All" ||
+        item.subCategory?.title === category;
+
+      const inSearch =
+        !term ||
+        item.title.toLowerCase().includes(term) ||
+        item.description?.toLowerCase().includes(term);
+
+      return inCategory && inSearch;
+    });
+  }, [foodItems, search, category]);
+
+  const popular = useMemo(() => {
+    return [...foodItems]
+      .sort((a, b) => b.popularity_score - a.popularity_score)
+      .slice(0, 4);
+  }, [foodItems]);
 
   const hero = popular[0];
 
-  const addToCart = (item: MenuItem) =>
+  const addToCart = (item: FoodItem) =>
     setCart(p => ({ ...p, [item.id]: { ...item, qty: (p[item.id]?.qty || 0) + 1 } }));
   const removeFromCart = (id: number) =>
     setCart(p => {
@@ -214,262 +218,239 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-[#f7f8f7] dark:bg-[#080c10] text-slate-700 dark:text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
-      {/* Google Fonts — only link tag, no style block */}
+      <Header
+        isDark={isDark}
+        toggleTheme={toggleTheme}
+        totalItems={totalItems}
+        setCartOpen={setCartOpen}
+      />
 
-
-      {/* ── HEADER ──────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-[#f7f8f7]/95 dark:bg-[#080c10]/95 backdrop-blur-[18px] border-b border-black/[0.06] dark:border-white/[0.06]">
-        <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch max-md:px-4 max-md:py-3">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-[42px] h-[42px] rounded-[14px] bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] flex items-center justify-center text-xl shrink-0">
-              🍽️
-            </div>
-            <div>
-              <p className="text-xl font-bold text-slate-900 dark:text-white leading-none" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-                LTU Food
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-[#00a37a] dark:text-[#6bffb8] mt-0.5">
-                Scan · Choose · Order
-              </p>
-            </div>
-          </div>
-
-          {/* Nav */}
-          <div className="flex items-center gap-2.5 max-md:grid max-md:grid-cols-4">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-              className="w-[38px] h-[38px] shrink-0 rounded-full bg-black/[0.06] dark:bg-white/[0.07] text-slate-600 dark:text-slate-300 border border-black/[0.06] dark:border-white/10 cursor-pointer flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            >
-              {isDark ? (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
-            </button>
-
-            <button className="rounded-full bg-transparent text-slate-500 dark:text-slate-400 px-3.5 py-2 text-[13px] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors border-none max-md:justify-center max-md:flex max-md:items-center">
-              Log in
-            </button>
-            <button className="rounded-full bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-[#6bffb8]/20 transition-colors max-md:justify-center max-md:flex max-md:items-center">
-              Register
-            </button>
-            <button
-              onClick={() => setCartOpen(true)}
-              className={`rounded-full px-4 py-2 text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all
-                ${totalItems > 0
-                  ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none"
-                  : "bg-black/[0.05] dark:bg-white/[0.07] text-slate-500 dark:text-slate-400 border border-black/[0.08] dark:border-white/10"
-                }`}
-            >
-              🛒 {totalItems > 0 ? `${totalItems} item${totalItems > 1 ? "s" : ""}` : "Cart"}
-            </button>
-          </div>
-        </div>
-      </header>
 
       <main className="max-w-[1200px] mx-auto px-6 pb-20 pt-9 max-md:px-4 max-md:pb-24 max-md:pt-5">
 
-        {/* ── HERO GRID ───────────────────────────────────────── */}
-        <section className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 mb-10 max-md:grid-cols-1 max-md:gap-3.5 max-md:mb-6 animate-[fadeUp_.5s_ease_both]">
-
-          {/* Hero card */}
-          <div className="relative min-h-[400px] max-md:min-h-[320px] rounded-[28px] max-md:rounded-[22px] overflow-hidden bg-gradient-to-br from-[#e7f6ee] to-[#f3f7f5] dark:from-[#0e1f14] dark:to-[#0a1118] border border-[#6bffb8]/22 dark:border-[#6bffb8]/14 p-9 max-md:p-5 flex flex-col justify-end col-span-2 max-md:col-span-1">
-            {/* blobs */}
-            <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle,rgba(107,255,184,0.18),transparent)] blur-[40px]" />
-            <div className="absolute -bottom-16 -left-10 w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(0,212,170,0.12),transparent)] blur-[32px]" />
-            <div className="relative z-10]">
-              <div className="inline-flex items-center gap-1.5 bg-[#6bffb8]/12 border border-[#6bffb8]/22 rounded-full px-3.5 py-1 mb-5">
-                <span className="text-[11px]">✦</span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8]">Today's favourite</span>
-              </div>
-              <div className="text-[72px] max-md:text-[52px] leading-none mb-4">{hero.emoji}</div>
-              <h1 className="text-[clamp(32px,5vw,52px)] font-black text-slate-900 dark:text-white leading-[1.1] mb-3" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-                {hero.title}
-              </h1>
-              <p className="text-sm leading-[1.7] text-slate-500 dark:text-slate-500 max-w-[440px] max-md:max-w-none mb-6">{hero.description}</p>
-              <div className="flex items-center gap-3.5 flex-wrap">
-                <span className="text-[26px] font-bold text-[#00a37a] dark:text-[#6bffb8]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-                  {money(hero.price)}
-                </span>
-                <button
-                  onClick={() => addToCart(hero)}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
-                >
-                  🛒 Add to order
-                </button>
-              </div>
-            </div>
+        {/* ── EMPTY STATE ─────────────────────────────────────── */}
+        {foodItems.length === 0 ? (
+          <div className="rounded-[22px] py-20 px-6 text-center bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07]">
+            <p className="text-6xl mb-4">🍽️</p>
+            <p className="font-bold text-slate-900 dark:text-white text-lg mb-1.5">The menu is being prepared</p>
+            <p className="text-[13px] text-slate-400 dark:text-slate-600">No dishes are available right now. Please check back soon.</p>
           </div>
+        ) : (
+          <>
+            {/* ── HERO GRID ─────────────────────────────────────── */}
+            <section className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 mb-10 max-md:grid-cols-1 max-md:gap-3.5 max-md:mb-6 animate-[fadeUp_.5s_ease_both]">
 
-          {/* Stat card 1 */}
-          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] flex flex-col gap-2.5">
-            <div className="w-[42px] h-[42px] rounded-[12px] bg-[#6bffb8]/10 flex items-center justify-center text-[22px]">⚡</div>
-            <p className="font-bold text-slate-900 dark:text-white text-base">Instant ordering</p>
-            <p className="text-xs text-slate-500 leading-[1.6]">Browse the menu and place your order directly from this page — no waiting for staff.</p>
-          </div>
-
-          {/* Stat card 2 */}
-          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] flex flex-col gap-2.5">
-            <div className="w-[42px] h-[42px] rounded-[12px] bg-yellow-400/10 flex items-center justify-center text-[22px]">🍴</div>
-            <p className="font-bold text-slate-900 dark:text-white text-base">{FOOD_ITEMS.length} dishes</p>
-            <p className="text-xs text-slate-500 leading-[1.6]">{categories.length - 1} categories from Nepali classics to Italian comfort food and more.</p>
-          </div>
-
-          {/* Popular picks */}
-          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] col-span-2 max-md:col-span-1">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8] mb-4">🔥 Popular picks</p>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-md:grid-cols-1 gap-3.5 max-md:gap-3">
-              {popular.map((item, i) => (
-                <div key={item.id} className="flex items-center gap-2.5">
-                  <span className="text-xs font-bold text-[#6bffb8]/40 w-[22px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-                    0{i + 1}
-                  </span>
-                  <span className="text-[22px]">{item.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)}</p>
+              {/* Hero card */}
+              <div className="relative min-h-[400px] max-md:min-h-[320px] rounded-[28px] max-md:rounded-[22px] overflow-hidden bg-gradient-to-br from-[#e7f6ee] to-[#f3f7f5] dark:from-[#0e1f14] dark:to-[#0a1118] border border-[#6bffb8]/22 dark:border-[#6bffb8]/14 p-9 max-md:p-5 flex flex-col justify-end col-span-2 max-md:col-span-1">
+                {/* blobs */}
+                <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle,rgba(107,255,184,0.18),transparent)] blur-[40px]" />
+                <div className="absolute -bottom-16 -left-10 w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(0,212,170,0.12),transparent)] blur-[32px]" />
+                {itemImage(hero) && (
+                  <img
+                    src={itemImage(hero) ?? undefined}
+                    alt={hero.title}
+                    className="absolute inset-0 h-full w-full object-cover opacity-90"
+                  />
+                )}
+                <div className="relative z-10">
+                  <div className="inline-flex items-center gap-1.5 bg-[#6bffb8]/12 border border-[#6bffb8]/22 rounded-full px-3.5 py-1 mb-5">
+                    <span className="text-[11px]">✦</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8]">Today's favourite</span>
+                  </div>
+                  <h1 className="text-[clamp(32px,5vw,52px)] font-black text-slate-900 dark:text-white leading-[1.1] mb-3" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                    {hero.title}
+                  </h1>
+                  <p className="text-sm leading-[1.7] text-slate-500 dark:text-slate-500 max-w-[440px] max-md:max-w-none mb-6">{hero.description}</p>
+                  <div className="flex items-center gap-3.5 flex-wrap">
+                    <span className="text-[26px] font-bold text-[#00a37a] dark:text-[#6bffb8]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                      {money(hero.price)}
+                    </span>
+                    <button
+                      onClick={() => addToCart(hero)}
+                      className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-semibold border-none cursor-pointer hover:opacity-90 transition-opacity"
+                    >
+                      🛒 Add to order
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
+              </div>
 
-        {/* ── FILTER BAR ──────────────────────────────────────── */}
-        <section className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07] mb-7 max-md:mb-5 animate-[fadeUp_.5s_.1s_ease_both]">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3.5">
-            <div>
-              <h2 className="text-[26px] font-bold text-slate-900 dark:text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Full Menu</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Filter by category · search what you crave</p>
-            </div>
-            <div className="relative w-[min(280px,100%)] max-md:w-full">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-600">🔍</span>
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search dishes…"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-[12px] bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-slate-900 dark:text-white text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
-                style={{ fontFamily: "'DM Sans', sans-serif" }}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`rounded-full px-4 py-1.5 text-[13px] font-semibold whitespace-nowrap border-none cursor-pointer transition-all shrink-0
-                  ${category === cat
-                    ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
-                    : "bg-black/[0.05] dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 border border-black/[0.08] dark:border-white/[0.08] hover:text-slate-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </section>
+              {/* Stat card 1 */}
+              <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] flex flex-col gap-2.5">
+                <div className="w-[42px] h-[42px] rounded-[12px] bg-[#6bffb8]/10 flex items-center justify-center text-[22px]">⚡</div>
+                <p className="font-bold text-slate-900 dark:text-white text-base">Instant ordering</p>
+                <p className="text-xs text-slate-500 leading-[1.6]">Browse the menu and place your order directly from this page — no waiting for staff.</p>
+              </div>
 
-        {/* ── MENU GRID ───────────────────────────────────────── */}
-        <section className="animate-[fadeUp_.5s_.2s_ease_both]">
-          {filtered.length === 0 ? (
-            <div className="rounded-[22px] py-16 px-6 text-center bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07]">
-              <p className="text-5xl mb-3">🍽️</p>
-              <p className="font-bold text-slate-900 dark:text-white text-base mb-1.5">No dishes found</p>
-              <p className="text-[13px] text-slate-400 dark:text-slate-600">Try a different category or search term.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] max-md:grid-cols-1 gap-[18px] max-md:gap-3.5">
-              {filtered.map((item, idx) => {
-                const { pill, dot } = cs(item.foodCategory?.title);
-                const inCart = cart[item.id];
+              {/* Stat card 2 */}
+              <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] flex flex-col gap-2.5">
+                <div className="w-[42px] h-[42px] rounded-[12px] bg-yellow-400/10 flex items-center justify-center text-[22px]">🍴</div>
+                <p className="font-bold text-slate-900 dark:text-white text-base">{foodItems.length} dishes</p>
+                <p className="text-xs text-slate-500 leading-[1.6]">{categories.length - 1} categories from Nepali classics to Italian comfort food and more.</p>
+              </div>
 
-                return (
-                  <article
-                    key={item.id}
-                    className="bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] rounded-[20px] overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_56px_rgba(107,255,184,0.09)] transition-all duration-[220ms]"
-                    style={{ animationDelay: `${0.04 * idx}s` }}
+              {/* Popular picks */}
+              <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] col-span-2 max-md:col-span-1">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8] mb-4">🔥 Popular picks</p>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-md:grid-cols-1 gap-3.5 max-md:gap-3">
+                  {popular.map((item, i) => {
+                    const img = itemImage(item);
+                    return (
+                      <div key={item.id} className="flex items-center gap-2.5">
+                        <span className="text-xs font-bold text-[#6bffb8]/40 w-[22px]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                          0{i + 1}
+                        </span>
+                        <div className="w-9 h-9 shrink-0 overflow-hidden rounded-[8px] bg-black/[0.04] dark:bg-white/[0.06] flex items-center justify-center text-[20px]">
+                          {img
+                            ? <img src={img} alt={item.title} className="h-full w-full object-cover" />
+                            : <span>{itemEmoji(item)}</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
+                          <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            {/* ── FILTER BAR ────────────────────────────────────── */}
+            <section className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07] mb-7 max-md:mb-5 animate-[fadeUp_.5s_.1s_ease_both]">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3.5">
+                <div>
+                  <h2 className="text-[26px] font-bold text-slate-900 dark:text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Full Menu</h2>
+                  <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Filter by category · search what you crave</p>
+                </div>
+                <div className="relative w-[min(280px,100%)] max-md:w-full">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-600">🔍</span>
+                  <input
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Search dishes…"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-[12px] bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-slate-900 dark:text-white text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                    style={{ fontFamily: "'DM Sans', sans-serif" }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={`rounded-full px-4 py-1.5 text-[13px] font-semibold whitespace-nowrap border-none cursor-pointer transition-all shrink-0
+                      ${category === cat
+                        ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
+                        : "bg-black/[0.05] dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 border border-black/[0.08] dark:border-white/[0.08] hover:text-slate-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10"
+                      }`}
                   >
-                    {/* Emoji zone */}
-                    <div className="relative h-[160px] max-md:h-[132px] flex items-center justify-center bg-gradient-to-br from-black/[0.04] to-black/[0.01] dark:from-white/[0.04] dark:to-white/[0.01]">
-                      <span className="text-[72px] max-md:text-[56px] leading-none select-none">{item.emoji}</span>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </section>
 
-                      {/* Category pill */}
-                      <span className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] ${pill}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full inline-block ${dot}`} />
-                        {item.foodCategory?.title}
-                      </span>
+            {/* ── MENU GRID ─────────────────────────────────────── */}
+            <section className="animate-[fadeUp_.5s_.2s_ease_both]">
+              {filtered.length === 0 ? (
+                <div className="rounded-[22px] py-16 px-6 text-center bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07]">
+                  <p className="text-5xl mb-3">🍽️</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-base mb-1.5">No dishes found</p>
+                  <p className="text-[13px] text-slate-400 dark:text-slate-600">Try a different category or search term.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] max-md:grid-cols-1 gap-[18px] max-md:gap-3.5">
+                  {filtered.map((item, idx) => {
+                    const { pill, dot } = cs(item.subCategory?.title);
+                    const inCart = cart[item.id];
+                    const img = itemImage(item);
 
-                      {/* Hot badge */}
-                      {(item.popularity_score ?? 0) >= 85 && (
-                        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/20">
-                          🔥 Hot
-                        </span>
-                      )}
-                    </div>
+                    return (
+                      <article
+                        key={item.id}
+                        className="bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] rounded-[20px] overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_56px_rgba(107,255,184,0.09)] transition-all duration-[220ms]"
+                        style={{ animationDelay: `${0.04 * idx}s` }}
+                      >
+                        {/* Image zone */}
+                        <div className="relative h-[160px] max-md:h-[132px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-black/[0.04] to-black/[0.01] dark:from-white/[0.04] dark:to-white/[0.01]">
+                          {img ? (
+                            <img src={img} alt={item.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-[72px] max-md:text-[56px] leading-none select-none">{itemEmoji(item)}</span>
+                          )}
 
-                    {/* Content */}
-                    <div className="p-4 flex flex-col gap-2.5">
-                      <div>
-                        <h3
-                          className="text-[17px] font-bold text-slate-900 dark:text-white leading-[1.3] truncate"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          {item.title}
-                        </h3>
-                        <p
-                          className="text-xs leading-[1.65] text-slate-400 dark:text-slate-600 mt-1.5 overflow-hidden"
-                          style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
-                        >
-                          {item.description ?? "Freshly prepared for your table."}
-                        </p>
-                      </div>
+                          {/* Category pill */}
+                          {item.subCategory?.title && (
+                            <span className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] ${pill}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full inline-block ${dot}`} />
+                              {item.subCategory.title}
+                            </span>
+                          )}
 
-                      <div className="flex items-center justify-between gap-2 mt-1">
-                        <span
-                          className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
-                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                        >
-                          {money(item.price)}
-                        </span>
+                          {/* Hot badge */}
+                          {(item.popularity_score ?? 0) >= 85 && (
+                            <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/20">
+                              🔥 Hot
+                            </span>
+                          )}
+                        </div>
 
-                        {inCart ? (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="w-[30px] h-[30px] rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
-                            >−</button>
-                            <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{inCart.qty}</span>
-                            <button
-                              onClick={() => addToCart(item)}
-                              className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
-                            >+</button>
+                        {/* Content */}
+                        <div className="p-4 flex flex-col gap-2.5">
+                          <div>
+                            <h3
+                              className="text-[17px] font-bold text-slate-900 dark:text-white leading-[1.3] truncate"
+                              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                            >
+                              {item.title}
+                            </h3>
+                            <p
+                              className="text-xs leading-[1.65] text-slate-400 dark:text-slate-600 mt-1.5 overflow-hidden"
+                              style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
+                            >
+                              {item.description ?? "Freshly prepared for your table."}
+                            </p>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => addToCart(item)}
-                            className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
-                          >
-                            + Add
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
+
+                          <div className="flex items-center justify-between gap-2 mt-1">
+                            <span
+                              className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
+                              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                            >
+                              {money(item.price)}
+                            </span>
+
+                            {inCart ? (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => removeFromCart(item.id)}
+                                  className="w-[30px] h-[30px] rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
+                                >−</button>
+                                <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{inCart.qty}</span>
+                                <button
+                                  onClick={() => addToCart(item)}
+                                  className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
+                                >+</button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => addToCart(item)}
+                                className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
+                              >
+                                + Add
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </main>
 
       {/* ── FLOATING CART BAR ──────────────────────────────────── */}

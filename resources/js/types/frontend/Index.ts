@@ -1,10 +1,22 @@
-export type FoodItem={
-    id:number;
-    title:string;
-    price:number;
-    description:string;
-    foodCategory:{
-        id:number;
-        title:string;
-    }
+export type SubCategory={
+    id:number
+    title:string
+    description: string
 }
+
+export interface FoodItem {
+    id: number;
+    title: string;
+    slug: string;
+    description: string | null;
+    price: number;
+    popularity_score: number;
+    images: string[] | null;
+    status: boolean;
+    tags: string[] | null;
+    subCategory?: {
+      id: number;
+      title: string;
+    };
+  }
+

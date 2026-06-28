@@ -18,10 +18,4 @@ class FrontController extends Controller
         ]);
     }
 
-    public function test()
-    {
-        return Inertia::render('Text', [
-            'canRegister' => Features::enabled(Features::registration()),
-        ]);
-    }
 }
