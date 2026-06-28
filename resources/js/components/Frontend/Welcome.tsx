@@ -9,7 +9,6 @@ type CartState = Record<number, CartItem>;
 const money = (price: number) =>
   new Intl.NumberFormat("en-NP", { style: "currency", currency: "NPR", maximumFractionDigits: 0 }).format(Number(price || 0));
 
-/* Pick the first available image for a dish, falling back to an emoji. */
 const itemImage = (item: FoodItem): string | null =>
   Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
 
