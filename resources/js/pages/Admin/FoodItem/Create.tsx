@@ -10,20 +10,20 @@ import InputError from "@/components/input-error"
 import { ArrowLeftIcon } from "lucide-react"
 import { FoodCategory } from "@/types/admin/FoodCategory"
 import { index, store } from "@/routes/admin/food-items"
+import { SubCategory } from "@/types/admin/SubCategory"
 
 
 const handleBack = () => {
     window.history.back()
 }
 interface FoodItemCreateProps {
-    foodCategories: FoodCategory[];
+    subCategories: SubCategory[];
 }
-export default function FoodItemCreate({ foodCategories }: FoodItemCreateProps) {
-
+export default function FoodItemCreate({ subCategories }: FoodItemCreateProps) {
     return (
         <>
 
-            <Head title="Create Gallery" />
+            <Head title="Create Food Item" />
             <div className="flex h-full flex-1 flex-col gap-6 p-4 ">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -65,21 +65,21 @@ export default function FoodItemCreate({ foodCategories }: FoodItemCreateProps) 
                                         {/* Name and Image in one row */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <Label htmlFor="food_category_id">
+                                                <Label htmlFor="sub_category_id">
                                                     Category <span className="text-red-500">*</span>
                                                 </Label>
                                                 <select
-                                                    id="food_category_id"
-                                                    name="food_category_id"
+                                                    id="sub_category_id"
+                                                    name="sub_category_id"
                                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                                 >
-                                                    {foodCategories.map((category) => (
+                                                    {subCategories.map((category) => (
                                                         <option key={category.id} value={category.id}>
                                                             {category.title}
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <InputError message={errors.gallery_type} />
+                                                <InputError message={errors.sub_category_id} />
                                             </div>
 
                                             <div className="space-y-2">

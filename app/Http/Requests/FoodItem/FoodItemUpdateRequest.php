@@ -24,7 +24,7 @@ class FoodItemUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'food_category_id' => ['required', 'integer', 'exists:food_categories,id'],
+            'sub_category_id' => ['required', 'integer', 'exists:sub_categories,id'],
             'title' => ['required', 'string', 'max:255'],
             'slug' => [
                 'required',

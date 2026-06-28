@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useAppearance } from "@/hooks/use-appearance";
 
 type MenuCategory = { id: number; title: string };
 type MenuItem = {
@@ -67,19 +68,19 @@ function CartDrawer({
       <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* panel */}
-      <div className="w-full max-w-[440px] md:max-w-[440px] bg-[#0d1117] border-l border-white/[0.08] flex flex-col">
+      <div className="w-full max-w-[440px] md:max-w-[440px] bg-white dark:bg-[#0d1117] border-l border-black/[0.08] dark:border-white/[0.08] flex flex-col">
 
         {/* header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.08]">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-black/[0.08] dark:border-white/[0.08]">
           <div>
             <p className="text-[11px] uppercase tracking-[0.12em] text-[#6bffb8] mb-1 font-['DM_Sans',sans-serif]">Your Order</p>
-            <p className="font-['Playfair_Display',Georgia,serif] text-[22px] font-bold text-white">
+            <p className="font-['Playfair_Display',Georgia,serif] text-[22px] font-bold text-slate-900 dark:text-white">
               {totalQty} item{totalQty !== 1 ? "s" : ""}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/[0.07] text-slate-400 border-none cursor-pointer text-base flex items-center justify-center hover:bg-white/10 transition-colors"
+            className="w-9 h-9 rounded-full bg-black/[0.06] dark:bg-white/[0.07] text-slate-500 dark:text-slate-400 border-none cursor-pointer text-base flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
           >
             ✕
           </button>
@@ -88,7 +89,7 @@ function CartDrawer({
         {ordered ? (
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 text-center">
             <div className="text-[64px] mb-4 animate-bounce">✅</div>
-            <p className="font-['Playfair_Display',Georgia,serif] text-[26px] font-bold text-white mb-2">Order Placed!</p>
+            <p className="font-['Playfair_Display',Georgia,serif] text-[26px] font-bold text-slate-900 dark:text-white mb-2">Order Placed!</p>
             <p className="text-[13px] text-slate-500">Your food is being prepared. Sit back & relax 🎉</p>
           </div>
         ) : (
@@ -103,25 +104,25 @@ function CartDrawer({
               ) : items.map(item => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 px-3.5 py-3 rounded-[14px] bg-white/[0.04] border border-white/[0.07]"
+                  className="flex items-center gap-3 px-3.5 py-3 rounded-[14px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07]"
                 >
                   <span className="text-[26px]">{item.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-white truncate">{item.title}</p>
-                    <p className="text-[11px] text-slate-600 mt-0.5">{money(item.price)} each</p>
+                    <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)} each</p>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => onRemove(item.id)}
-                      className="w-7 h-7 rounded-full bg-white/[0.08] text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-white/20 transition-colors"
+                      className="w-7 h-7 rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
                     >−</button>
-                    <span className="text-[13px] font-bold text-white w-[18px] text-center">{item.qty}</span>
+                    <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{item.qty}</span>
                     <button
                       onClick={() => onAdd(item)}
                       className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
                     >+</button>
                   </div>
-                  <span className="text-[13px] font-bold text-[#6bffb8] w-[70px] text-right shrink-0">
+                  <span className="text-[13px] font-bold text-[#00a37a] dark:text-[#6bffb8] w-[70px] text-right shrink-0">
                     {money(item.price * item.qty)}
                   </span>
                 </div>
@@ -130,16 +131,16 @@ function CartDrawer({
 
             {/* totals + CTA */}
             {items.length > 0 && (
-              <div className="px-6 pb-6 pt-4 border-t border-white/[0.08]">
+              <div className="px-6 pb-6 pt-4 border-t border-black/[0.08] dark:border-white/[0.08]">
                 <div className="flex flex-col gap-2 mb-4">
                   {([["Subtotal", subtotal], ["Service charge (10%)", service]] as [string, number][]).map(([label, val]) => (
                     <div key={label} className="flex justify-between text-[13px] text-slate-500">
                       <span>{label}</span><span>{money(val)}</span>
                     </div>
                   ))}
-                  <div className="flex justify-between text-[15px] font-bold text-white pt-2.5 border-t border-white/[0.08]">
+                  <div className="flex justify-between text-[15px] font-bold text-slate-900 dark:text-white pt-2.5 border-t border-black/[0.08] dark:border-white/[0.08]">
                     <span>Total</span>
-                    <span className="text-[#6bffb8]">{money(total)}</span>
+                    <span className="text-[#00a37a] dark:text-[#6bffb8]">{money(total)}</span>
                   </div>
                 </div>
                 <button
@@ -165,6 +166,10 @@ export default function Welcome() {
   const [cartOpen, setCartOpen] = useState(false);
   const [ordered, setOrdered] = useState(false);
 
+  const { resolvedAppearance, updateAppearance } = useAppearance();
+  const isDark = resolvedAppearance === "dark";
+  const toggleTheme = () => updateAppearance(isDark ? "light" : "dark");
+
   const categories = useMemo(() => {
     const names = FOOD_ITEMS
       .map(i => i.foodCategory?.title)
@@ -185,7 +190,7 @@ export default function Welcome() {
     () => [...FOOD_ITEMS].sort((a, b) => (b.popularity_score ?? 0) - (a.popularity_score ?? 0)).slice(0, 4),
     [],
   );
-  
+
   const hero = popular[0];
 
   const addToCart = (item: MenuItem) =>
@@ -207,13 +212,13 @@ export default function Welcome() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080c10] text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#f7f8f7] dark:bg-[#080c10] text-slate-700 dark:text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>
 
       {/* Google Fonts — only link tag, no style block */}
 
 
       {/* ── HEADER ──────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-[#080c10]/95 backdrop-blur-[18px] border-b border-white/[0.06]">
+      <header className="sticky top-0 z-40 bg-[#f7f8f7]/95 dark:bg-[#080c10]/95 backdrop-blur-[18px] border-b border-black/[0.06] dark:border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch max-md:px-4 max-md:py-3">
           {/* Logo */}
           <div className="flex items-center gap-3">
@@ -221,29 +226,48 @@ export default function Welcome() {
               🍽️
             </div>
             <div>
-              <p className="text-xl font-bold text-white leading-none" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              <p className="text-xl font-bold text-slate-900 dark:text-white leading-none" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                 LTU Food
               </p>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-[#6bffb8] mt-0.5">
+              <p className="text-[10px] uppercase tracking-[0.15em] text-[#00a37a] dark:text-[#6bffb8] mt-0.5">
                 Scan · Choose · Order
               </p>
             </div>
           </div>
 
           {/* Nav */}
-          <div className="flex items-center gap-2.5 max-md:grid max-md:grid-cols-3">
-            <button className="rounded-full bg-transparent text-slate-400 px-3.5 py-2 text-[13px] font-semibold cursor-pointer hover:text-white transition-colors border-none max-md:justify-center max-md:flex max-md:items-center">
+          <div className="flex items-center gap-2.5 max-md:grid max-md:grid-cols-4">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              className="w-[38px] h-[38px] shrink-0 rounded-full bg-black/[0.06] dark:bg-white/[0.07] text-slate-600 dark:text-slate-300 border border-black/[0.06] dark:border-white/10 cursor-pointer flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              {isDark ? (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
+
+            <button className="rounded-full bg-transparent text-slate-500 dark:text-slate-400 px-3.5 py-2 text-[13px] font-semibold cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors border-none max-md:justify-center max-md:flex max-md:items-center">
               Log in
             </button>
-            <button className="rounded-full bg-[#6bffb8]/10 text-[#6bffb8] border border-[#6bffb8]/22 px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-[#6bffb8]/20 transition-colors max-md:justify-center max-md:flex max-md:items-center">
+            <button className="rounded-full bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 px-4 py-2 text-[13px] font-semibold cursor-pointer hover:bg-[#6bffb8]/20 transition-colors max-md:justify-center max-md:flex max-md:items-center">
               Register
             </button>
             <button
               onClick={() => setCartOpen(true)}
-              className={`rounded-full px-4 py-2 text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all border-none
+              className={`rounded-full px-4 py-2 text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-all
                 ${totalItems > 0
-                  ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
-                  : "bg-white/[0.07] text-slate-400 border border-white/10"
+                  ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none"
+                  : "bg-black/[0.05] dark:bg-white/[0.07] text-slate-500 dark:text-slate-400 border border-black/[0.08] dark:border-white/10"
                 }`}
             >
               🛒 {totalItems > 0 ? `${totalItems} item${totalItems > 1 ? "s" : ""}` : "Cart"}
@@ -258,22 +282,22 @@ export default function Welcome() {
         <section className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-5 mb-10 max-md:grid-cols-1 max-md:gap-3.5 max-md:mb-6 animate-[fadeUp_.5s_ease_both]">
 
           {/* Hero card */}
-          <div className="relative min-h-[400px] max-md:min-h-[320px] rounded-[28px] max-md:rounded-[22px] overflow-hidden bg-gradient-to-br from-[#0e1f14] to-[#0a1118] border border-[#6bffb8]/14 p-9 max-md:p-5 flex flex-col justify-end col-span-2 max-md:col-span-1">
+          <div className="relative min-h-[400px] max-md:min-h-[320px] rounded-[28px] max-md:rounded-[22px] overflow-hidden bg-gradient-to-br from-[#e7f6ee] to-[#f3f7f5] dark:from-[#0e1f14] dark:to-[#0a1118] border border-[#6bffb8]/22 dark:border-[#6bffb8]/14 p-9 max-md:p-5 flex flex-col justify-end col-span-2 max-md:col-span-1">
             {/* blobs */}
             <div className="absolute -top-20 -right-20 w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle,rgba(107,255,184,0.18),transparent)] blur-[40px]" />
             <div className="absolute -bottom-16 -left-10 w-[200px] h-[200px] rounded-full bg-[radial-gradient(circle,rgba(0,212,170,0.12),transparent)] blur-[32px]" />
             <div className="relative z-10]">
               <div className="inline-flex items-center gap-1.5 bg-[#6bffb8]/12 border border-[#6bffb8]/22 rounded-full px-3.5 py-1 mb-5">
                 <span className="text-[11px]">✦</span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#6bffb8]">Today's favourite</span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8]">Today's favourite</span>
               </div>
               <div className="text-[72px] max-md:text-[52px] leading-none mb-4">{hero.emoji}</div>
-              <h1 className="text-[clamp(32px,5vw,52px)] font-black text-white leading-[1.1] mb-3" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+              <h1 className="text-[clamp(32px,5vw,52px)] font-black text-slate-900 dark:text-white leading-[1.1] mb-3" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                 {hero.title}
               </h1>
-              <p className="text-sm leading-[1.7] text-slate-500 max-w-[440px] max-md:max-w-none mb-6">{hero.description}</p>
+              <p className="text-sm leading-[1.7] text-slate-500 dark:text-slate-500 max-w-[440px] max-md:max-w-none mb-6">{hero.description}</p>
               <div className="flex items-center gap-3.5 flex-wrap">
-                <span className="text-[26px] font-bold text-[#6bffb8]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                <span className="text-[26px] font-bold text-[#00a37a] dark:text-[#6bffb8]" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                   {money(hero.price)}
                 </span>
                 <button
@@ -287,22 +311,22 @@ export default function Welcome() {
           </div>
 
           {/* Stat card 1 */}
-          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.04] border border-white/[0.07] flex flex-col gap-2.5">
+          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] flex flex-col gap-2.5">
             <div className="w-[42px] h-[42px] rounded-[12px] bg-[#6bffb8]/10 flex items-center justify-center text-[22px]">⚡</div>
-            <p className="font-bold text-white text-base">Instant ordering</p>
+            <p className="font-bold text-slate-900 dark:text-white text-base">Instant ordering</p>
             <p className="text-xs text-slate-500 leading-[1.6]">Browse the menu and place your order directly from this page — no waiting for staff.</p>
           </div>
 
           {/* Stat card 2 */}
-          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.04] border border-white/[0.07] flex flex-col gap-2.5">
+          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] flex flex-col gap-2.5">
             <div className="w-[42px] h-[42px] rounded-[12px] bg-yellow-400/10 flex items-center justify-center text-[22px]">🍴</div>
-            <p className="font-bold text-white text-base">{FOOD_ITEMS.length} dishes</p>
+            <p className="font-bold text-slate-900 dark:text-white text-base">{FOOD_ITEMS.length} dishes</p>
             <p className="text-xs text-slate-500 leading-[1.6]">{categories.length - 1} categories from Nepali classics to Italian comfort food and more.</p>
           </div>
 
           {/* Popular picks */}
-          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.04] border border-white/[0.07] col-span-2 max-md:col-span-1">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[#6bffb8] mb-4">🔥 Popular picks</p>
+          <div className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] col-span-2 max-md:col-span-1">
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8] mb-4">🔥 Popular picks</p>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] max-md:grid-cols-1 gap-3.5 max-md:gap-3">
               {popular.map((item, i) => (
                 <div key={item.id} className="flex items-center gap-2.5">
@@ -311,8 +335,8 @@ export default function Welcome() {
                   </span>
                   <span className="text-[22px]">{item.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-white truncate">{item.title}</p>
-                    <p className="text-[11px] text-slate-600 mt-0.5">{money(item.price)}</p>
+                    <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">{item.title}</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-0.5">{money(item.price)}</p>
                   </div>
                 </div>
               ))}
@@ -321,19 +345,19 @@ export default function Welcome() {
         </section>
 
         {/* ── FILTER BAR ──────────────────────────────────────── */}
-        <section className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-white/[0.03] border border-white/[0.07] mb-7 max-md:mb-5 animate-[fadeUp_.5s_.1s_ease_both]">
+        <section className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07] mb-7 max-md:mb-5 animate-[fadeUp_.5s_.1s_ease_both]">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3.5">
             <div>
-              <h2 className="text-[26px] font-bold text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Full Menu</h2>
-              <p className="text-xs text-slate-600 mt-1">Filter by category · search what you crave</p>
+              <h2 className="text-[26px] font-bold text-slate-900 dark:text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Full Menu</h2>
+              <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Filter by category · search what you crave</p>
             </div>
             <div className="relative w-[min(280px,100%)] max-md:w-full">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-600">🔍</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-600">🔍</span>
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search dishes…"
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-[12px] bg-white/[0.06] border border-white/10 text-white text-[13px] outline-none placeholder:text-slate-600"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-[12px] bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-slate-900 dark:text-white text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
                 style={{ fontFamily: "'DM Sans', sans-serif" }}
               />
             </div>
@@ -346,7 +370,7 @@ export default function Welcome() {
                 className={`rounded-full px-4 py-1.5 text-[13px] font-semibold whitespace-nowrap border-none cursor-pointer transition-all shrink-0
                   ${category === cat
                     ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
-                    : "bg-white/[0.05] text-slate-400 border border-white/[0.08] hover:text-white hover:bg-white/10"
+                    : "bg-black/[0.05] dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 border border-black/[0.08] dark:border-white/[0.08] hover:text-slate-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10"
                   }`}
               >
                 {cat}
@@ -358,10 +382,10 @@ export default function Welcome() {
         {/* ── MENU GRID ───────────────────────────────────────── */}
         <section className="animate-[fadeUp_.5s_.2s_ease_both]">
           {filtered.length === 0 ? (
-            <div className="rounded-[22px] py-16 px-6 text-center bg-white/[0.03] border border-white/[0.07]">
+            <div className="rounded-[22px] py-16 px-6 text-center bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07]">
               <p className="text-5xl mb-3">🍽️</p>
-              <p className="font-bold text-white text-base mb-1.5">No dishes found</p>
-              <p className="text-[13px] text-slate-600">Try a different category or search term.</p>
+              <p className="font-bold text-slate-900 dark:text-white text-base mb-1.5">No dishes found</p>
+              <p className="text-[13px] text-slate-400 dark:text-slate-600">Try a different category or search term.</p>
             </div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] max-md:grid-cols-1 gap-[18px] max-md:gap-3.5">
@@ -372,11 +396,11 @@ export default function Welcome() {
                 return (
                   <article
                     key={item.id}
-                    className="bg-white/[0.04] border border-white/[0.07] rounded-[20px] overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_56px_rgba(107,255,184,0.09)] transition-all duration-[220ms]"
+                    className="bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] rounded-[20px] overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_56px_rgba(107,255,184,0.09)] transition-all duration-[220ms]"
                     style={{ animationDelay: `${0.04 * idx}s` }}
                   >
                     {/* Emoji zone */}
-                    <div className="relative h-[160px] max-md:h-[132px] flex items-center justify-center bg-gradient-to-br from-white/[0.04] to-white/[0.01]">
+                    <div className="relative h-[160px] max-md:h-[132px] flex items-center justify-center bg-gradient-to-br from-black/[0.04] to-black/[0.01] dark:from-white/[0.04] dark:to-white/[0.01]">
                       <span className="text-[72px] max-md:text-[56px] leading-none select-none">{item.emoji}</span>
 
                       {/* Category pill */}
@@ -387,7 +411,7 @@ export default function Welcome() {
 
                       {/* Hot badge */}
                       {(item.popularity_score ?? 0) >= 85 && (
-                        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#6bffb8] border border-[#6bffb8]/20">
+                        <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/20">
                           🔥 Hot
                         </span>
                       )}
@@ -397,13 +421,13 @@ export default function Welcome() {
                     <div className="p-4 flex flex-col gap-2.5">
                       <div>
                         <h3
-                          className="text-[17px] font-bold text-white leading-[1.3] truncate"
+                          className="text-[17px] font-bold text-slate-900 dark:text-white leading-[1.3] truncate"
                           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                         >
                           {item.title}
                         </h3>
                         <p
-                          className="text-xs leading-[1.65] text-slate-600 mt-1.5 overflow-hidden"
+                          className="text-xs leading-[1.65] text-slate-400 dark:text-slate-600 mt-1.5 overflow-hidden"
                           style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
                         >
                           {item.description ?? "Freshly prepared for your table."}
@@ -412,7 +436,7 @@ export default function Welcome() {
 
                       <div className="flex items-center justify-between gap-2 mt-1">
                         <span
-                          className="text-[18px] font-bold text-[#6bffb8]"
+                          className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
                           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                         >
                           {money(item.price)}
@@ -422,9 +446,9 @@ export default function Welcome() {
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => removeFromCart(item.id)}
-                              className="w-[30px] h-[30px] rounded-full bg-white/[0.08] text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-white/20 transition-colors"
+                              className="w-[30px] h-[30px] rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
                             >−</button>
-                            <span className="text-[13px] font-bold text-white w-[18px] text-center">{inCart.qty}</span>
+                            <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{inCart.qty}</span>
                             <button
                               onClick={() => addToCart(item)}
                               className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
@@ -433,7 +457,7 @@ export default function Welcome() {
                         ) : (
                           <button
                             onClick={() => addToCart(item)}
-                            className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
+                            className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
                           >
                             + Add
                           </button>

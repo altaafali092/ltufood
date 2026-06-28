@@ -7,6 +7,7 @@ use App\Http\Requests\FoodItem\FoodItemStoreRequest;
 use App\Http\Requests\FoodItem\FoodItemUpdateRequest;
 use App\Models\FoodCategory;
 use App\Models\FoodItem;
+use App\Models\SubCategory;
 use Inertia\Inertia;
 
 class FoodItemController extends Controller
@@ -16,7 +17,7 @@ class FoodItemController extends Controller
      */
     public function index()
     {
-        $foodItems = FoodItem::with(['foodCategory'])->get();
+        $foodItems = FoodItem::with(['subCategory'])->get();
         return Inertia::render('Admin/FoodItem/Index', [
             'foodItems' => $foodItems,
         ]);
@@ -27,9 +28,9 @@ class FoodItemController extends Controller
      */
     public function create()
     {
-        $foodCategories = FoodCategory::where('status', 1)->get();
+        $subCategories = SubCategory::where('status', 1)->get();
         return Inertia::render('Admin/FoodItem/Create', [
-            'foodCategories' => $foodCategories,
+            'subCategories' => $subCategories,
         ]);
     }
 
@@ -48,6 +49,7 @@ class FoodItemController extends Controller
      */
     public function show(FoodItem $foodItem)
     {
+        $foodItem->load('subCategory');
         return Inertia::render('Admin/FoodItem/Show', [
             'foodItem' => $foodItem,
         ]);
@@ -58,11 +60,10 @@ class FoodItemController extends Controller
      */
     public function edit(FoodItem $foodItem)
     {
-        $foodCategories = FoodCategory::where('status', 1)->get();
-
+        $subCategories = SubCategory::where('status', 1)->get();
         return Inertia::render('Admin/FoodItem/Edit', [
             'foodItem' => $foodItem,
-            'foodCategories' => $foodCategories,
+            'subCategories' => $subCategories,
         ]);
     }
 

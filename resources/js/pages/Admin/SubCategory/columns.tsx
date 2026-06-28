@@ -2,66 +2,56 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Link, router } from "@inertiajs/react";
 import { EyeIcon, Pencil, Trash } from "lucide-react";
+import { SubCategory } from "@/types/admin/SubCategory";
+import { destroy, edit, show } from "@/routes/admin/sub-categories";
 
-
-import { FoodItem } from "@/types/admin/FoodItem";
-import { destroy, edit, show } from "@/routes/admin/food-items";
-
-export const columns: ColumnDef<FoodItem>[] = [
+export const columns: ColumnDef<SubCategory>[] = [
     {
         accessorKey: "id",
         header: "Id",
         cell: ({ row }) => row.index + 1,
     },
-   
-
     {
-        accessorKey: "images",
-        header: "Images",
+        accessorKey: "image",
+        header: "Image",
         cell: ({ row }) => {
-            const images = row.getValue("images") as string[];
-            if (!images || images.length === 0) {
-                return <div className="h-32 w-32 rounded bg-gray-200" />;
-            }
-            const randomIndex = Math.floor(Math.random() * images.length);
-            return (
+            const image = row.getValue("image") as string;
+            return image ? (
                 <img
-                    src={images[randomIndex]}
+                    src={image}
                     alt={row.getValue("title")}
                     className="h-20 w-20 object-fill rounded"
                 />
+            ) : (
+                <div className="h-32 w-32 rounded bg-gray-200" />
             );
         },
-    },
-     {
-        accessorKey: "sub_category.title",
-        header: "Category",
     },
 
     {
         accessorKey: "title",
         header: "Title",
     },
-    // {
-    //     accessorKey: "slug",
-    //     header: "Slug",
-    // },
+    {
+        accessorKey: "slug",
+        header: "Slug",
+    },
 
     {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => {
-            const foodItem = row.original;
+            const subCategory = row.original;
 
             return (
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={edit(foodItem.id).url}>
+                        <Link href={edit(subCategory.id).url}>
                             <Pencil className="h-4 w-4" />
                         </Link>
                     </Button>
                     <Button variant="outline" size="sm" asChild>
-                        <Link href={show(foodItem.id).url}>
+                        <Link href={show(subCategory.id).url}>
                             <EyeIcon className="h-4 w-4" />
                         </Link>
                     </Button>
@@ -76,7 +66,7 @@ export const columns: ColumnDef<FoodItem>[] = [
                                 )
                             ) {
                                 router.delete(
-                                    destroy(foodItem.id).url,
+                                    destroy(subCategory.id).url,
                                     {
                                         preserveScroll: true,
                                     }

@@ -1,0 +1,34 @@
+<?php
+
+namespace App\Http\Requests\SubCategory;
+
+use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreSubCategoryRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'alpha_dash', Rule::unique('sub_categories', 'slug')->withoutTrashed()],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'food_category_id' => ['required', 'integer', 'exists:food_categories,id'],
+        ];
+    }
+}

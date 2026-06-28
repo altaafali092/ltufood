@@ -8,17 +8,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class FoodItem extends Model
 {
     use HasFactory, SoftDeletes,FileTrait;
 
-    protected $with = ['foodCategory'];
+    protected $with = ['subCategory'];
 
     protected $fillable = [
-        'food_category_id',
+        'sub_category_id',
         'title',
         'slug',
         'description',
@@ -41,8 +39,8 @@ class FoodItem extends Model
         return $this->castingFile(defaultPath: 'FoodItems');
     }
 
-    public function foodCategory(): BelongsTo
+    public function subCategory(): BelongsTo
     {
-        return $this->belongsTo(FoodCategory::class);
+        return $this->belongsTo(SubCategory::class);
     }
 }

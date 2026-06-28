@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, CakeIcon, FolderGit2, LayoutGrid, Table2 } from 'lucide-react';
+import { BookOpen, Cable, CakeIcon, FolderGit2, LayoutGrid, Table2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -19,6 +19,7 @@ import { dashboard } from '@/routes/admin';
 import { index  as foodCategoryIndex } from '@/routes/admin/food-categories';
 import { index as foodItemIndex } from '@/routes/admin/food-items';
 import { index as tableIndex } from '@/routes/admin/tables';
+import { index as subCategoryIndex } from '@/routes/admin/sub-categories';
 
 const mainNavItems: NavItem[] = [
     {
@@ -35,6 +36,11 @@ const mainNavItems: NavItem[] = [
         title: 'FoodCategory',
         href: foodCategoryIndex(),
         icon: CakeIcon,
+    },
+    {
+        title: 'SubCategory',
+        href: subCategoryIndex(),
+        icon: Cable,
     },
     {
         title: 'FoodItem',

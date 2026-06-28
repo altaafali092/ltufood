@@ -8,25 +8,22 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import InputError from "@/components/input-error"
 import { ArrowLeftIcon } from "lucide-react"
+import { index, store } from "@/routes/admin/sub-categories"
 import { FoodCategory } from "@/types/admin/FoodCategory"
-import { index, store, update } from "@/routes/admin/food-items"
-import { FoodItem } from "@/types/admin/FoodItem"
-import { SubCategory } from "@/types/admin/SubCategory"
 
 
 const handleBack = () => {
     window.history.back()
 }
-interface FoodItemCreateProps {
-    subCategories: SubCategory[];
-    foodItem: FoodItem  ;
+interface categoryProps{
+    categories: FoodCategory[];
 }
-export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCreateProps) {
+export default function SubCategoryCreate({categories}:categoryProps) {
 
     return (
         <>
 
-            <Head title="Create Gallery" />
+            <Head title="Create sub Category" />
             <div className="flex h-full flex-1 flex-col gap-6 p-4 ">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -58,7 +55,7 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
                         </CardHeader>
                         <CardContent>
                             <Form
-                                action={update(foodItem.id).url}
+                                action={store().url}
                                 method="post"
                                 className="space-y-6"
                                 encType="multipart/form-data"
@@ -66,25 +63,24 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
                                 {({ errors }) => (
                                     <>
                                         {/* Name and Image in one row */}
-                                        <input type="hidden" name="_method" value="PUT" />
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="sub_category_id">
+
+                                        <div className="space-y-2">
+                                                <Label htmlFor="food_category_id">
                                                     Category <span className="text-red-500">*</span>
                                                 </Label>
                                                 <select
-                                                    id="sub_category_id"
-                                                    name="sub_category_id"
-                                                    defaultValue={foodItem.sub_category_id}
+                                                    id="food_category_id"
+                                                    name="food_category_id"
                                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                                 >
-                                                    {subCategories.map((category) => (
+                                                    {categories.map((category) => (
                                                         <option key={category.id} value={category.id}>
                                                             {category.title}
                                                         </option>
                                                     ))}
                                                 </select>
-                                                <InputError message={errors.sub_category_id} />
+                                                <InputError message={errors.gallery_type} />
                                             </div>
 
                                             <div className="space-y-2">
@@ -92,8 +88,8 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
                                                 <Input
                                                     id="title"
                                                     name="title"
-                                                    defaultValue={foodItem.title}
                                                     type="text"
+                                                    placeholder="e.g., Food Category"
                                                 />
                                                 <InputError message={errors.title} />
                                             </div>
@@ -103,8 +99,8 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
                                                 <Input
                                                     id="slug"
                                                     name="slug"
-                                                    defaultValue={foodItem.slug}
                                                     type="text"
+                                                    placeholder="e.g, food_category"
                                                 />
                                                 <InputError message={errors.slug} />
                                                 <p className="text-sm text-muted-foreground">
@@ -114,54 +110,14 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
                                             <div className="space-y-2">
                                                 <Label htmlFor="image">Image <span className="text-red-500">*</span></Label>
                                                 <Input
-                                                    id="images"
+                                                    id="image"
+                                                    name="image"
                                                     type="file"
-                                                    name="images[]"
-                                                    multiple
-                                                    accept="image/*"
+                                                    placeholder="Upload image"
                                                 />
-                                                <InputError message={errors.images} />
+                                                <InputError message={errors.image} />
                                                 <p className="text-sm text-muted-foreground">
                                                     Upload an image.
-                                                </p>
-                                            </div>
-                                             <div className="space-y-2">
-                                                <Label htmlFor="price">Price <span className="text-red-500">*</span></Label>
-                                                <Input
-                                                    id="price"
-                                                    name="price"  
-                                                    defaultValue={foodItem.price}
-                                                    type="number"
-                                                    placeholder="e.g., 10.00"
-                                                />
-                                                <InputError message={errors.price} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="tags">Tags <span className="text-red-500">*</span></Label>
-                                                <Input
-                                                    id="tags"
-                                                    type="text"
-                                                    name="tags[]"
-                                                    defaultValue={foodItem.tags}
-                                                   
-                                                />
-                                                <InputError message={errors.tags} />
-                                                <p className="text-sm text-muted-foreground">
-                                                    Tags should be comma separated.
-                                                </p>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="popularity_score">Popularity Score <span className="text-red-500">*</span></Label>
-                                                <Input
-                                                    id="popularity_score"
-                                                    name="popularity_score"
-                                                    type="number"
-                                                    defaultValue={foodItem.popularity_score}
-                                                 
-                                                />
-                                                <InputError message={errors.popularity_score} />
-                                                <p className="text-sm text-muted-foreground">
-                                                    Tags should be comma separated.
                                                 </p>
                                             </div>
 
@@ -171,7 +127,6 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
                                             <Textarea
                                                 id="description"
                                                 name="description"
-                                                defaultValue={foodItem.description}
                                                 placeholder="Optional description"
                                                 rows={4}
                                             />
@@ -181,7 +136,7 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
 
                                         {/* Buttons */}
                                         <div className="flex gap-2 pt-4">
-                                            <Button type="submit">Update</Button>
+                                            <Button type="submit">Save</Button>
                                             <Button type="button" variant="outline" onClick={handleBack}>
                                                 Cancel
                                             </Button>
@@ -200,10 +155,10 @@ export default function FoodItemCreate({ subCategories, foodItem }: FoodItemCrea
 }
 
 
-FoodItemCreate.layout = {
+SubCategoryCreate.layout = {
     breadcrumbs: [
         {
-            title: 'Food Items',
+            title: 'Sub Categories',
             href: index().url,
         },
     ],

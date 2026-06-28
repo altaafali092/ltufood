@@ -1,8 +1,9 @@
-import { FoodCategory } from "./FoodCategory";
+
+import { SubCategory } from "./SubCategory";
 
 export type FoodItem={
-    food_category_id:number;
-    FoodCategory:FoodCategory[];
+    sub_category_id:number;
+    subCategory:SubCategory[];
     id:number;
     title:string;
     description:string;

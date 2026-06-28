@@ -11,7 +11,7 @@ class FrontController extends Controller
 {
     public function index()
     {
-        $foodItems = FoodItem::with('foodCategory')->latest()->get();
+        $foodItems = FoodItem::with('subCategory')->latest()->get();
         return Inertia::render('welcome', [
             'foodItems' => $foodItems,
             'canRegister' => Features::enabled(Features::registration()),
