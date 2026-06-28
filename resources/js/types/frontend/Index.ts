@@ -14,9 +14,6 @@ export interface FoodItem {
     images: string[] | null;
     status: boolean;
     tags: string[] | null;
-    subCategory?: {
-      id: number;
-      title: string;
-    };
+    sub_category?:SubCategory[];
   }
 

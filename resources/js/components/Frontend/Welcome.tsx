@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import { useAppearance } from "@/hooks/use-appearance";
 import Header from "./Header";
 import { FoodItem } from "@/types/frontend/Index";
+import FilterBar from "./FilterBar";
+import MenuGrid from "./MenuGrid";
+import { Button } from "../ui/button";
 
 type CartItem = FoodItem & { qty: number };
 type CartState = Record<number, CartItem>;
@@ -16,16 +19,7 @@ const itemEmoji = (item: FoodItem): string =>
   (item.tags?.find((t) => t) ?? "") as string || "🍽️";
 
 /* Category badge colours — keyed by sub-category title. */
-const CAT_CLASS: Record<string, { pill: string; dot: string }> = {
-  Nepali: { pill: "bg-orange-400/10 text-orange-400", dot: "bg-orange-400" },
-  Chinese: { pill: "bg-red-400/10 text-red-400", dot: "bg-red-400" },
-  Italian: { pill: "bg-green-400/10 text-green-400", dot: "bg-green-400" },
-  "Fast Food": { pill: "bg-yellow-400/10 text-yellow-400", dot: "bg-yellow-400" },
-  Drinks: { pill: "bg-blue-400/10 text-blue-400", dot: "bg-blue-400" },
-  Desserts: { pill: "bg-fuchsia-400/10 text-fuchsia-400", dot: "bg-fuchsia-400" },
-};
-const cs = (cat?: string) =>
-  CAT_CLASS[cat ?? ""] ?? { pill: "bg-slate-400/10 text-slate-400", dot: "bg-slate-400" };
+
 
 /* ─── Cart Drawer ──────────────────────────────────────────────────────── */
 function CartDrawer({
@@ -166,7 +160,7 @@ export default function Welcome({ foodItems }: WelcomeProps) {
 
   const categories = useMemo(() => {
     const names = foodItems
-      .map(item => item.subCategory?.title)
+      .map(item => item.sub_category?.title)
       .filter((title): title is string => Boolean(title));
     return ["All", ...Array.from(new Set(names))];
   }, [foodItems]);
@@ -177,7 +171,7 @@ export default function Welcome({ foodItems }: WelcomeProps) {
     return foodItems.filter(item => {
       const inCategory =
         category === "All" ||
-        item.subCategory?.title === category;
+        item.sub_category?.title === category;
 
       const inSearch =
         !term ||
@@ -316,155 +310,43 @@ export default function Welcome({ foodItems }: WelcomeProps) {
             </section>
 
             {/* ── FILTER BAR ────────────────────────────────────── */}
-            <section className="rounded-[22px] max-md:rounded-[18px] p-5 max-md:p-[18px] bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07] mb-7 max-md:mb-5 animate-[fadeUp_.5s_.1s_ease_both]">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-4 max-md:flex-col max-md:items-stretch max-md:gap-3.5">
-                <div>
-                  <h2 className="text-[26px] font-bold text-slate-900 dark:text-white" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Full Menu</h2>
-                  <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">Filter by category · search what you crave</p>
-                </div>
-                <div className="relative w-[min(280px,100%)] max-md:w-full">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-600">🔍</span>
-                  <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search dishes…"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-[12px] bg-black/[0.04] dark:bg-white/[0.06] border border-black/[0.08] dark:border-white/10 text-slate-900 dark:text-white text-[13px] outline-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
-                    style={{ fontFamily: "'DM Sans', sans-serif" }}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategory(cat)}
-                    className={`rounded-full px-4 py-1.5 text-[13px] font-semibold whitespace-nowrap border-none cursor-pointer transition-all shrink-0
-                      ${category === cat
-                        ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117]"
-                        : "bg-black/[0.05] dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 border border-black/[0.08] dark:border-white/[0.08] hover:text-slate-900 dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10"
-                      }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </section>
+            <FilterBar
+              search={search}
+              setSearch={setSearch}
+              category={category}
+              setCategory={setCategory}
+              categories={categories}
+            />
+
 
             {/* ── MENU GRID ─────────────────────────────────────── */}
-            <section className="animate-[fadeUp_.5s_.2s_ease_both]">
-              {filtered.length === 0 ? (
-                <div className="rounded-[22px] py-16 px-6 text-center bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07]">
-                  <p className="text-5xl mb-3">🍽️</p>
-                  <p className="font-bold text-slate-900 dark:text-white text-base mb-1.5">No dishes found</p>
-                  <p className="text-[13px] text-slate-400 dark:text-slate-600">Try a different category or search term.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] max-md:grid-cols-1 gap-[18px] max-md:gap-3.5">
-                  {filtered.map((item, idx) => {
-                    const { pill, dot } = cs(item.subCategory?.title);
-                    const inCart = cart[item.id];
-                    const img = itemImage(item);
-
-                    return (
-                      <article
-                        key={item.id}
-                        className="bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.06] dark:border-white/[0.07] rounded-[20px] overflow-hidden hover:-translate-y-1.5 hover:shadow-[0_20px_56px_rgba(107,255,184,0.09)] transition-all duration-[220ms]"
-                        style={{ animationDelay: `${0.04 * idx}s` }}
-                      >
-                        {/* Image zone */}
-                        <div className="relative h-[160px] max-md:h-[132px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-black/[0.04] to-black/[0.01] dark:from-white/[0.04] dark:to-white/[0.01]">
-                          {img ? (
-                            <img src={img} alt={item.title} className="h-full w-full object-cover" />
-                          ) : (
-                            <span className="text-[72px] max-md:text-[56px] leading-none select-none">{itemEmoji(item)}</span>
-                          )}
-
-                          {/* Category pill */}
-                          {item.subCategory?.title && (
-                            <span className={`absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] ${pill}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full inline-block ${dot}`} />
-                              {item.subCategory.title}
-                            </span>
-                          )}
-
-                          {/* Hot badge */}
-                          {(item.popularity_score ?? 0) >= 85 && (
-                            <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/20">
-                              🔥 Hot
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-4 flex flex-col gap-2.5">
-                          <div>
-                            <h3
-                              className="text-[17px] font-bold text-slate-900 dark:text-white leading-[1.3] truncate"
-                              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                            >
-                              {item.title}
-                            </h3>
-                            <p
-                              className="text-xs leading-[1.65] text-slate-400 dark:text-slate-600 mt-1.5 overflow-hidden"
-                              style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
-                            >
-                              {item.description ?? "Freshly prepared for your table."}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between gap-2 mt-1">
-                            <span
-                              className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
-                              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                            >
-                              {money(item.price)}
-                            </span>
-
-                            {inCart ? (
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  onClick={() => removeFromCart(item.id)}
-                                  className="w-[30px] h-[30px] rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
-                                >−</button>
-                                <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{inCart.qty}</span>
-                                <button
-                                  onClick={() => addToCart(item)}
-                                  className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
-                                >+</button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => addToCart(item)}
-                                className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
-                              >
-                                + Add
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+            <MenuGrid
+              filtered={filtered}
+              cart={cart}
+              addToCart={addToCart}
+              removeFromCart={removeFromCart}
+              money={money}
+              itemImage={itemImage}
+              itemEmoji={itemEmoji}
+            />
           </>
         )}
       </main>
 
       {/* ── FLOATING CART BAR ──────────────────────────────────── */}
       {totalItems > 0 && !cartOpen && (
-        <div className="fixed bottom-6 max-md:bottom-3 left-0 right-0 flex justify-center px-4 max-md:px-3 z-40">
-          <button
+        <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
+          <Button
             onClick={() => setCartOpen(true)}
-            className="flex items-center gap-3.5 max-md:gap-3 px-6 py-3.5 max-md:px-4 max-md:py-3 rounded-[18px] max-md:rounded-[16px] border-none cursor-pointer bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-bold w-full max-w-[440px] max-md:max-w-none shadow-[0_16px_48px_rgba(107,255,184,0.32)] hover:opacity-95 transition-opacity"
+            className="w-full max-w-md rounded-2xl bg-gradient-to-r from-[#6bffb8]/30 to-[#00d4aa]/40 px-6 py-7 shadow-xl backdrop-blur hover:opacity-95"
           >
-            <span className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center text-xs font-black shrink-0">
-              {totalItems}
+            <span className="flex w-full items-center gap-1.5">
+              <span className="w-7 h-7 rounded-full bg-black/20 flex items-center justify-center text-xs font-black shrink-0"> {totalItems} </span>
+
+              <span className="flex-1 text-left">View your order</span>
+              <span className="font-black">{money(subtotal)}</span>
             </span>
-            <span className="flex-1 text-left">View your order</span>
-            <span className="font-black">{money(subtotal)}</span>
-          </button>
+          </Button>
         </div>
       )}
 
