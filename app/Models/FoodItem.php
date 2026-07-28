@@ -44,3 +44,4 @@ class FoodItem extends Model
         return $this->belongsTo(SubCategory::class);
     }
 }
+

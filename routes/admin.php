@@ -3,6 +3,8 @@
 use App\Http\Controllers\Admin\DashbaordController;
 use App\Http\Controllers\Admin\FoodCategoryController;
 use App\Http\Controllers\Admin\FoodItemController;
+use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SubCategoryController;
 use App\Http\Controllers\Admin\TableController;
 use App\Http\Controllers\OrderController;
@@ -18,4 +20,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orderIndex');
     Route::post('/orders/{order}/assign', [OrderController::class, 'assign'])->name('orderAssign');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orderStatusUpdate');
+
+
+    Route::resource('permission',PermissionController::class);
+    Route::resource('role',RoleController::class);
+    
 });

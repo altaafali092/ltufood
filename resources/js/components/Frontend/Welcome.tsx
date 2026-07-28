@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useAppearance } from "@/hooks/use-appearance";
 import Header from "./Header";
-import { FoodItem } from "@/types/frontend/Index";
+import { FoodItem, SharedCart } from "@/types/frontend/Index";
 import FilterBar from "./FilterBar";
 import MenuGrid from "./MenuGrid";
 import { Button } from "../ui/button";
-import { Link } from "@inertiajs/react";
-import { foodItemDetail } from "@/routes";
+import { Link, router } from "@inertiajs/react";
+import { cartStore, cartUpdate, foodItemDetail } from "@/routes";
 
 type CartItem = FoodItem & { qty: number };
 type CartState = Record<number, CartItem>;
@@ -147,12 +147,17 @@ function CartDrawer({
 interface WelcomeProps {
   foodItems: FoodItem[];
   canRegister?: boolean;
+  cart?: SharedCart;
 }
 
-export default function Welcome({ foodItems }: WelcomeProps) {
+const requestOptions = {
+  preserveScroll: true,
+  preserveState: true,
+};
+
+export default function Welcome({ foodItems, cart: sharedCart }: WelcomeProps) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [cart, setCart] = useState<CartState>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [ordered, setOrdered] = useState(false);
 
@@ -192,22 +197,53 @@ export default function Welcome({ foodItems }: WelcomeProps) {
 
   const hero = popular[0];
 
-  const addToCart = (item: FoodItem) =>
-    setCart(p => ({ ...p, [item.id]: { ...item, qty: (p[item.id]?.qty || 0) + 1 } }));
-  const removeFromCart = (id: number) =>
-    setCart(p => {
-      const u = { ...p };
-      if (u[id]?.qty > 1) { u[id] = { ...u[id], qty: u[id].qty - 1 }; }
-      else { delete u[id]; }
-      return u;
-    });
+  const cart = useMemo<CartState>(() => {
+    const foodItemsById = new Map(foodItems.map((item) => [item.id, item]));
 
-  const totalItems = Object.values(cart).reduce((s, i) => s + i.qty, 0);
-  const subtotal = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
+    return Object.values(sharedCart?.items ?? {}).reduce<CartState>((items, line) => {
+      const foodItem = foodItemsById.get(line.food_item_id);
+
+      items[line.food_item_id] = {
+        ...(foodItem ?? {
+          id: line.food_item_id,
+          title: line.title,
+          slug: line.slug ?? String(line.food_item_id),
+          description: null,
+          price: line.price,
+          popularity_score: 0,
+          images: null,
+          status: true,
+          tags: null,
+          sub_category: null,
+        }),
+        qty: line.quantity,
+      };
+
+      return items;
+    }, {});
+  }, [foodItems, sharedCart]);
+
+  const addToCart = (item: FoodItem) => {
+    router.post(cartStore(item.id).url, { quantity: 1 }, requestOptions);
+  };
+
+  const removeFromCart = (id: number) => {
+    const quantity = cart[id]?.qty ?? 0;
+
+    if (quantity > 1) {
+      router.put(cartUpdate(id).url, { quantity: quantity - 1 }, requestOptions);
+      return;
+    }
+
+    router.delete(`/cart/${id}`, requestOptions);
+  };
+
+  const totalItems = sharedCart?.count ?? Object.values(cart).reduce((s, i) => s + i.qty, 0);
+  const subtotal = sharedCart?.subtotal ?? Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
 
   const placeOrder = () => {
     setOrdered(true);
-    setTimeout(() => { setCart({}); setOrdered(false); setCartOpen(false); }, 3200);
+    setTimeout(() => { setOrdered(false); setCartOpen(false); }, 3200);
   };
 
   return (

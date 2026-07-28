@@ -1,41 +1,45 @@
-import { Head, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import { ChevronLeft, Share2, Heart } from 'lucide-react'
 import { formatMoney } from '@/lib/frontend/format-money'
 import { useAppearance } from '@/hooks/use-appearance'
 import { QuantityControls } from '@/components/Frontend/QuantityControls'
 import Header from '@/components/Frontend/Header'
-import type { FoodItem, SubCategory } from '@/types/frontend/Index'
-import { Link } from '@inertiajs/react'
+import type { FoodItem, SharedCart } from '@/types/frontend/Index'
+import { cartStore } from '@/routes'
 
 interface PageProps {
   fooditem: FoodItem
+  cart?: SharedCart
 }
 
 const FoodItemDetailPage = () => {
-  const { fooditem } = usePage<PageProps>().props
+  const { fooditem, cart } = usePage<PageProps>().props
   const { isDark, toggleTheme } = useAppearance()
   const [qty, setQty] = useState(1)
   const [isWishlisted, setIsWishlisted] = useState(false)
-  const [cartOpen, setCartOpen] = useState(false)
+  const [, setCartOpen] = useState(false)
+  const [added, setAdded] = useState(false)
+  const [processing, setProcessing] = useState(false)
 
   const imageUrl = fooditem.images?.[0] || null
+  const subCategory = fooditem.sub_category ?? fooditem.subCategory ?? null
   const emoji = fooditem.tags?.[0] || '🍽️'
   const isPopular = (fooditem.popularity_score ?? 0) >= 85
 
   const handleAddToCart = () => {
-    try {
-      const cartItem = { ...fooditem, qty }
-      const cart = JSON.parse(localStorage.getItem('cart') || '{}')
-      cart[fooditem.id] = cartItem
-      localStorage.setItem('cart', JSON.stringify(cart))
-      // signal welcome page to open cart and then navigate home
-      localStorage.setItem('openCart', '1')
-    } catch (e) {
-      // ignore
-    }
-    // navigate back to welcome (will read localStorage and open cart)
-    window.location.href = '/'
+    setProcessing(true)
+    setAdded(false)
+
+    router.post(
+      cartStore(fooditem.id).url,
+      { quantity: qty },
+      {
+        preserveScroll: true,
+        onSuccess: () => setAdded(true),
+        onFinish: () => setProcessing(false),
+      },
+    )
   }
 
   return (
@@ -44,7 +48,7 @@ const FoodItemDetailPage = () => {
       <div className={isDark ? 'dark' : ''}>
         <div className="min-h-screen bg-white dark:bg-[#0d1117]">
           {/* Header */}
-          <Header isDark={isDark} toggleTheme={toggleTheme} totalItems={0} setCartOpen={setCartOpen} />
+          <Header isDark={isDark} toggleTheme={toggleTheme} totalItems={cart?.count ?? 0} setCartOpen={setCartOpen} />
 
           {/* Main Content */}
           <main className="max-w-[1200px] mx-auto px-6 py-8">
@@ -77,9 +81,9 @@ const FoodItemDetailPage = () => {
                 {/* Header Info */}
                 <div>
                   {/* Category Badge */}
-                  {fooditem.subCategory && (
+                  {subCategory && (
                     <span className="inline-block px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.1em] bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/20 mb-4">
-                      {fooditem.subCategory.title}
+                      {subCategory.title}
                     </span>
                   )}
 
@@ -163,9 +167,10 @@ const FoodItemDetailPage = () => {
                   {/* Add to Cart Button */}
                   <button
                     onClick={handleAddToCart}
+                    disabled={processing || !fooditem.status}
                     className="w-full py-4 rounded-[12px] bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 hover:bg-[#6bffb8]/20 transition-colors font-semibold uppercase tracking-[0.1em] text-sm cursor-pointer"
                   >
-                    + Add {qty} to Cart
+                    {processing ? 'Adding...' : added ? 'Added to Cart' : `+ Add ${qty} to Cart`}
                   </button>
 
                   {/* Secondary Actions */}
@@ -210,7 +215,7 @@ const FoodItemDetailPage = () => {
                     Category
                   </p>
                   <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {fooditem.subCategory?.title || 'Uncategorized'}
+                    {subCategory?.title || 'Uncategorized'}
                   </p>
                 </div>
 

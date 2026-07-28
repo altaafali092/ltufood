@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Cable, CakeIcon, FolderGit2, LayoutGrid, Table2 } from 'lucide-react';
+import { BookOpen, Cable, CakeIcon, FolderGit2, LayoutGrid, Shield, Table2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -20,6 +20,8 @@ import { index  as foodCategoryIndex } from '@/routes/admin/food-categories';
 import { index as foodItemIndex } from '@/routes/admin/food-items';
 import { index as tableIndex } from '@/routes/admin/tables';
 import { index as subCategoryIndex } from '@/routes/admin/sub-categories';
+import { index as permissionIndex } from '@/routes/admin/permission';
+import { index as roleIndex } from '@/routes/admin/role';
 
 const mainNavItems: NavItem[] = [
     {
@@ -47,20 +49,18 @@ const mainNavItems: NavItem[] = [
         href: foodItemIndex(),
         icon:CakeIcon,
     },
-];
 
-// const footerNavItems: NavItem[] = [
-//     {
-//         title: 'Repository',
-//         href: 'https://github.com/laravel/react-starter-kit',
-//         icon: FolderGit2,
-//     },
-//     {
-//         title: 'Documentation',
-//         href: 'https://laravel.com/docs/starter-kits#react',
-//         icon: BookOpen,
-//     },
-// ];
+    {
+        title: 'Permission',
+        href:permissionIndex(),
+        icon:CakeIcon,
+    },
+    {
+        title:'Role',
+        href: roleIndex(),
+        icon: Shield
+    }
+];
 
 export function AppSidebar() {
     return (
