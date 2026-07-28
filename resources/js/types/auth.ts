@@ -1,3 +1,5 @@
+import { Role } from "./admin/RolePermisson";
+
 export type User = {
     id: number;
     name: string;
@@ -8,7 +10,11 @@ export type User = {
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
-};
+    roles?: Role[];
+    can:Record<string,boolean>;
+}
+
+
 
 export type Auth = {
     user: User;

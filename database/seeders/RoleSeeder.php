@@ -14,38 +14,52 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        
+
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
 
         $roles = [
             'Super Admin' => Permission::pluck('name')->toArray(),
-        
+
             'Admin' => [
                 'view users',
                 'create users',
                 'edit users',
-                'view staff',
-                'create staff',
-                'edit staff',
-                'view important call',
-                'create important call',
-                'edit important call',
-                'delete important call',
+
+                'view food category',
+                'edit food category',
+                'delete food category',
+                'create food category',
+
+                'view food sub category',
+                'edit food sub category',
+                'delete food sub category',
+                'create food sub category',
+
+                'view food item',
+                'edit food item',
+                'delete food item',
+                'create food item',
+
+                'view table',
+                'edit table',
+                'delete table',
+                'create table',
             ],
-        
+
             'Staff' => [
-                'view important call',
-                'create important call',
+                'view table',
+                'edit table',
+               
+                'create table',
             ],
-        
+
             'User' => [],
         ];
-        
+
         foreach ($roles as $roleName => $permissions) {
             $role = Role::firstOrCreate(['name' => $roleName]);
             $role->syncPermissions($permissions);
         }
     }
-    
 }

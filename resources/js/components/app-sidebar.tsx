@@ -1,7 +1,15 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Cable, CakeIcon, FolderGit2, LayoutGrid, Shield, Table2 } from 'lucide-react';
+import {
+    Cable,
+    CakeIcon,
+    KeyRound,
+    LayoutGrid,
+    LockKeyhole,
+    Table2,
+    User2,
+} from 'lucide-react';
+
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -14,55 +22,72 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
-import type { NavItem } from '@/types';
 import { dashboard } from '@/routes/admin';
-import { index  as foodCategoryIndex } from '@/routes/admin/food-categories';
-import { index as foodItemIndex } from '@/routes/admin/food-items';
-import { index as tableIndex } from '@/routes/admin/tables';
-import { index as subCategoryIndex } from '@/routes/admin/sub-categories';
-import { index as permissionIndex } from '@/routes/admin/permission';
-import { index as roleIndex } from '@/routes/admin/role';
+import permission from '@/routes/admin/permission';
+import role from '@/routes/admin/role';
+import user from '@/routes/admin/user';
+import tables from '@/routes/admin/tables';
+import foodCategories from '@/routes/admin/food-categories';
+import subCategories from '@/routes/admin/sub-categories';
+import foodItems from '@/routes/admin/food-items';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Tables',
-        href: tableIndex(),
-        icon: Table2,
-    },
-    {
-        title: 'FoodCategory',
-        href: foodCategoryIndex(),
-        icon: CakeIcon,
-    },
-    {
-        title: 'SubCategory',
-        href: subCategoryIndex(),
-        icon: Cable,
-    },
-    {
-        title: 'FoodItem',
-        href: foodItemIndex(),
-        icon:CakeIcon,
-    },
-
-    {
-        title: 'Permission',
-        href:permissionIndex(),
-        icon:CakeIcon,
-    },
-    {
-        title:'Role',
-        href: roleIndex(),
-        icon: Shield
-    }
-];
+import { useCan } from '@/hooks/use-can';
 
 export function AppSidebar() {
+    const can = useCan();
+
+    const mainNavItems = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+            show: true,
+        },
+        {
+            title: 'Tables',
+            href: tables.index(),
+            icon: Table2,
+            show: can('view table'),
+           
+        },
+        {
+            title: 'Food Category',
+            href: foodCategories.index(),
+            icon: CakeIcon,
+            show: can('view food category'),
+        },
+        {
+            title: 'Sub Category',
+            href: subCategories.index(),
+            icon: Cable,
+            show: can('view sub category'),
+        },
+        {
+            title: 'Food Item',
+            href: foodItems.index(),
+            icon: CakeIcon,
+            show: can('view food item'),
+        },
+        {
+            title: 'Permission',
+            href: permission.index(),
+            icon: KeyRound,
+            show: can('view permission'),
+        },
+        {
+            title: 'Role',
+            href: role.index(),
+            icon: LockKeyhole,
+            show: can('view role'),
+        },
+        {
+            title: 'Users',
+            href: user.index(),
+            icon: User2,
+            show: can('view users'),
+        },
+    ].filter(item => item.show);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -82,7 +107,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                {/* <NavFooter items={footerNavItems} className="mt-auto" /> */}
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

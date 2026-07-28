@@ -20,3 +20,4 @@ export interface RoleWithPermissions extends Role {
 export interface RoleWithPermissionsAndUsers extends RoleWithPermissions {
     users: User[]
 }
+

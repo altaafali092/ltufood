@@ -11,6 +11,7 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -23,8 +24,9 @@ class TableController extends Controller
      */
     public function index(): Response
     {
-        $tables = Table::latest()->get();
 
+        Gate::authorize('view table', Table::class);
+        $tables = Table::latest()->paginate(7);
         return Inertia::render('Admin/Table/Index', [
             'tables' => $tables,
         ]);
@@ -35,6 +37,8 @@ class TableController extends Controller
      */
     public function create(): Response
     {
+
+        Gate::authorize('create table', Table::class);
         return Inertia::render('Admin/Table/Create');
     }
 
@@ -43,13 +47,14 @@ class TableController extends Controller
      */
     public function store(TablStoreRequest $request): RedirectResponse
     {
-        $validated = $request->validated();
 
+        Gate::authorize('create table', Table::class);
+        $validated = $request->validated();
         $table = Table::create([
             'table_number' => $validated['table_number'],
             'qr_uuid' => Str::uuid(),
             'lat' => $validated['lat'] ?? 28.0500,   // Default Nepalgunj approx
-            'lng'=> $validated['lng'] ?? 81.6167,
+            'lng' => $validated['lng'] ?? 81.6167,
             'radius_meters' => $validated['radius_meters'] ?? 50,
         ]);
 
@@ -75,6 +80,8 @@ class TableController extends Controller
      */
     public function show(Table $table): Response
     {
+
+        Gate::authorize('view table', Table::class);
         return Inertia::render('Admin/Table/Show', [
             'table' => $table->loadCount('orders'),
         ]);
@@ -85,6 +92,8 @@ class TableController extends Controller
      */
     public function edit(Table $table): Response
     {
+
+        Gate::authorize('edit table', Table::class);
         return Inertia::render('Admin/Table/Edit', [
             'table' => $table,
         ]);
@@ -95,6 +104,8 @@ class TableController extends Controller
      */
     public function update(TableUpdateRequest $request, Table $table): RedirectResponse
     {
+
+        Gate::authorize('edit table', Table::class);
         $table->update($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Table updated.')]);
@@ -107,6 +118,8 @@ class TableController extends Controller
      */
     public function destroy(Table $table): RedirectResponse
     {
+
+        Gate::authorize('delete table', Table::class);
         if ($table->qr_code_image) {
             Storage::disk('public')->delete($table->qr_code_image);
         }

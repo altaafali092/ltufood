@@ -23,11 +23,6 @@ class PermissionSeeder extends Seeder
             'delete users',
             'create users',
 
-            'view staff',
-            'edit staff',
-            'delete staff',
-            'create staff',
-
             'view role',
             'edit role',
             'delete role',
@@ -38,12 +33,26 @@ class PermissionSeeder extends Seeder
             'delete permission',
             'create permission',
 
-            'view important call',
-            'edit important call',
-            'delete important call',
-            'create important call',
 
+            'view food category',
+            'edit food category',
+            'delete food category',
+            'create food category',
 
+            'view food sub category',
+            'edit food sub category',
+            'delete food sub category',
+            'create food sub category',
+
+            'view food item',
+            'edit food item',
+            'delete food item',
+            'create food item',
+
+            'view table',
+            'edit table',
+            'delete table',
+            'create table',
 
         ];
 

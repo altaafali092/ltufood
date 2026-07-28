@@ -5,6 +5,8 @@ import { Plus } from 'lucide-react';
 import { create, index } from '@/routes/admin/tables';
 import { RestaurantTable } from '@/types/admin/Table';
 import { columns } from './columns';
+import { useCan } from '@/hooks/use-can';
+import Pagination from '@/components/Pagination';
 
 interface Props {
     tables: RestaurantTable[];
@@ -20,6 +22,7 @@ TableIndex.layout = {
 };
 
 export default function TableIndex({ tables }: Props) {
+    const can = useCan();
     return (
         <>
             <Head title="Tables" />
@@ -31,16 +34,20 @@ export default function TableIndex({ tables }: Props) {
                             Manage QR tables for customer ordering.
                         </p>
                     </div>
-                    <Button asChild>
+                    {can('create table') && (<Button asChild>
                         <Link href={create().url} className="flex items-center gap-2">
                             <Plus className="h-4 w-4" />
                             Create Table
                         </Link>
-                    </Button>
+                    </Button>)}
+
                 </div>
 
                 <div className="container mx-auto py-6">
-                    <DataTable columns={columns} data={tables || []} />
+                    
+
+                    <DataTable columns={columns(can)} data={tables.data || []} />
+                    <Pagination links={tables.links} />
                 </div>
             </div>
         </>
