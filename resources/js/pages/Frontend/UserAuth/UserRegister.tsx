@@ -1,188 +1,221 @@
-import { ArrowRight } from 'lucide-react'
 import React, { useState } from 'react'
-
-// NOTE: Replace <form> with Inertia's Form wrapper or useForm hook for Inertia routing.
+import { ArrowRight, ChefHat, Mail, PhoneCall, UserCircle2, Lock, Eye, EyeOff, Check } from 'lucide-react'
+import { Form, Link, useForm } from '@inertiajs/react'
+import { loginPage, register, registerUser } from '@/routes'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import InputError from '@/components/input-error'
 
 const UserRegister = () => {
-    const [agreed, setAgreed] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     return (
-        <div className="min-h-screen grid grid-cols-2 max-md:grid-cols-1 overflow-hidden bg-[#0d0a08] font-sans">
+        <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 bg-[#181c30] font-sans antialiased selection:bg-[#f07030] selection:text-white">
 
-            {/* ── Left decorative panel ── */}
-            <div className="relative flex flex-col justify-center px-14 py-16 bg-white overflow-hidden max-md:hidden">
-                <img
-                    src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/authentication/illustration.svg"
-                    alt="Illustration"
-                    className="w-full h-auto max-h-[600px] object-contain"
+            <div className="relative hidden lg:flex lg:col-span-6 flex-col justify-between p-12 overflow-hidden bg-[#202440]">
+
+                {/* Background Image with Dark Gradient Layer */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center opacity-50 scale-105 transition-transform duration-1000 hover:scale-100"
+                    style={{
+                        backgroundImage: `url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1974&auto=format&fit=crop')`,
+                    }}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#181c30] via-[#181c30]/50 to-transparent" />
 
+
+                {/* Brand Header */}
+                <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+                        <ChefHat className="h-5 w-5" />
+                    </div>
+                    <span className="font-serif text-2xl font-bold tracking-tight text-white">
+                        LTU Food
+                    </span>
+                </div>
+
+                {/* Customer Value Proposition */}
+                <div className="relative z-10 max-w-md space-y-4 mb-6">
+                    <div className="inline-block px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs text-white tracking-widest uppercase">
+                        Join the Club
+                    </div>
+                    <h2 className="font-serif text-3xl font-normal text-white leading-tight">
+                        Create an account to unlock exclusive dining perks and faster checkout.
+                    </h2>
+                    <p className="text-sm text-[#a8a29e]">
+                        Join thousands of food lovers enjoying artisanal dishes, instant reservations, and delivery rewards.
+                    </p>
+                </div>
+
+                {/* Footer Badges */}
+                <div className="relative z-10 flex items-center gap-6 text-xs text-[#a8a29e] tracking-wider">
+                    <span>• Pickup</span>
+                    <span>• Delivery</span>
+                    <span>• Rewards</span>
+                </div>
             </div>
+            <div className="lg:col-span-6 flex items-center justify-center p-6 sm:p-12 md:p-16 bg-[#1a2037] relative">
+                <div className="w-full max-w-sm space-y-6 relative z-10">
 
-            {/* ── Right register panel ── */}
-            <div className="relative flex items-center justify-center px-16 py-15 bg-[#faf7f4] max-md:px-7 max-md:py-10">
-
-                {/* Left separator line */}
-                <div
-                    className="absolute top-16 bottom-16 left-0 w-px max-md:hidden"
-                    style={{
-                        background: 'linear-gradient(to bottom, transparent, #e0d5ca 25%, #e0d5ca 75%, transparent)',
-                    }}
-                />
-
-                {/* Decorative corner bracket */}
-                <div
-                    className="absolute top-8 right-8 w-12 h-12 opacity-60"
-                    style={{
-                        borderTop: '1.5px solid #e0d0c4',
-                        borderRight: '1.5px solid #e0d0c4',
-                        borderRadius: '0 6px 0 0',
-                    }}
-                />
-
-                <div className="w-full max-w-[380px]">
-
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="font-serif text-[32px] font-bold text-[#1a0f08] leading-[1.15] mb-2.5">
+                    <div className="space-y-2">
+                        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-white tracking-tight">
                             Create an account
                         </h1>
-                        <p className="text-sm font-light text-[#9a8880]">
-                            Join us today for exclusive management tools
+
+                    </div>
+
+                    <div className="relative flex items-center justify-center">
+                        <div className="border-t border-[#2e345b] w-full" />
+                        <span className="bg-[#1a2037] px-3 text-xs text-[#78716c] absolute">
+                            or sign up with email
+                        </span>
+                    </div>
+
+                    {/* Form */}
+                    <Form action={registerUser().url} method='post' className="space-y-3.5">
+                        {({ errors,processing }) => (
+                            <>
+                                <div className="space-y-2">
+                                    <Label htmlFor="name" className="text-gray-300 font-semibold text-xs uppercase">
+                                        Full Name
+                                    </Label>
+                                    <div className="relative">
+                                        <UserCircle2 className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716c]" />
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            type="text"
+                                            placeholder="John Doe"
+                                            className="pl-10 bg-[#242a4a] border-[#2e345b] text-white placeholder:text-[#78716c] focus-visible:ring-primary h-11"
+                                        />
+                                    </div>
+                                    <InputError message={errors.name} />
+                                </div>
+
+                                {/* Email Address Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="text-gray-300 font-semibold text-xs uppercase">
+                                        Email Address
+                                    </Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716c]" />
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            placeholder="your.email@example.com"
+                                            className="pl-10 bg-[#242a4a] border-[#2e345b] text-white placeholder:text-[#78716c] focus-visible:ring-primary h-11"
+
+                                        />
+                                    </div>
+                                    <InputError message={errors.mail} />
+                                </div>
+
+                                {/* Phone Number Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="phone" className="text-gray-300 font-semibold text-xs uppercase">
+                                        Phone Number
+                                    </Label>
+                                    <div className="relative">
+                                        <PhoneCall className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716c]" />
+                                        <Input
+                                            id="phone"
+                                            name="phone"
+                                            type="tel"
+                                            placeholder="9824578900"
+                                            className="pl-10 bg-[#242a4a] border-[#2e345b] text-white placeholder:text-[#78716c] focus-visible:ring-primary h-11"
+
+                                        />
+                                    </div>
+                                    <InputError message={errors.phone}/>
+                                </div>
+
+                                {/* Password Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-gray-300 font-semibold text-xs uppercase">
+                                        Password
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716c]" />
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="••••••••"
+                                            className="pl-10 pr-10 bg-[#242a4a] border-[#2e345b] text-white placeholder:text-[#78716c] focus-visible:ring-primary h-11"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#78716c] hover:text-white transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                    <InputError message={errors.password}/>
+                                </div>
+
+                                {/* Confirm Password Field */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="password_confirmation" className="text-gray-300 font-semibold text-xs uppercase">
+                                        Confirm Password
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716c]" />
+                                        <Input
+                                            id="password_confirmation"
+                                            name="password_confirmation"
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            placeholder="••••••••"
+                                            className="pl-10 pr-10 bg-[#242a4a] border-[#2e345b] text-white placeholder:text-[#78716c] focus-visible:ring-primary h-11"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#78716c] hover:text-white transition-colors"
+                                        >
+                                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+
+
+                                {/* Submit Button */}
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full group relative flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 active:scale-[0.99] transition-all duration-150 !mt-5 disabled:opacity-50"
+                                >
+                                    <span>{processing ? 'Creating Account...' : 'Create Account'}</span>
+                                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                                </button>
+                            </>
+
+                        )}
+
+
+                    </Form>
+
+                    {/* Existing Account Callout */}
+                    <p className="text-center text-xs text-[#a8a29e]">
+                        Already have an account?{' '}
+                        <Link href={loginPage().url} className="font-semibold text-[#f07030] hover:underline">
+                            Sign in
+                        </Link>
+                    </p>
+
+                    {/* Footer */}
+                    <div className="pt-2 border-t border-[#2e345b]/60 text-center">
+                        <p className="text-xs text-[#78716c]">
+                            © {new Date().getFullYear()} LTU Food. All rights reserved.
                         </p>
                     </div>
 
-                    <form action="/register" method="post">
-
-                        {/* Full Name field */}
-                        <div className="mb-4">
-                            <label htmlFor="name" className="block text-[11px] font-medium tracking-[0.1em] uppercase text-[#7a6860] mb-2">
-                                Full Name
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    name="name"
-                                    id="name"
-                                    placeholder="John Doe"
-                                    className="w-full bg-white border border-[#e4d9d0] rounded-[10px] px-4 py-3.5 text-sm text-[#1a0f08] outline-none transition-all duration-200 shadow-sm placeholder:text-[#c0b0a6] focus:border-[#f07030] focus:ring-2 focus:ring-[#f07030]/10"
-                                />
-                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#c0b0a6] text-sm pointer-events-none">
-                                    👤
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Mobile Number field */}
-                        <div className="mb-4">
-                            <label htmlFor="mobile" className="block text-[11px] font-medium tracking-[0.1em] uppercase text-[#7a6860] mb-2">
-                                Mobile Number
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="tel"
-                                    name="mobile"
-                                    id="mobile"
-                                    placeholder="+1 234 567 8900"
-                                    className="w-full bg-white border border-[#e4d9d0] rounded-[10px] px-4 py-3.5 text-sm text-[#1a0f08] outline-none transition-all duration-200 shadow-sm placeholder:text-[#c0b0a6] focus:border-[#f07030] focus:ring-2 focus:ring-[#f07030]/10"
-                                />
-                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#c0b0a6] text-sm pointer-events-none">
-                                    �
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Password field */}
-                        <div className="mb-6">
-                            <label htmlFor="password" className="block text-[11px] font-medium tracking-[0.1em] uppercase text-[#7a6860] mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="password"
-                                    name="password"
-                                    id="password"
-                                    placeholder="••••••••"
-                                    className="w-full bg-white border border-[#e4d9d0] rounded-[10px] px-4 py-3.5 text-sm text-[#1a0f08] outline-none transition-all duration-200 shadow-sm placeholder:text-[#c0b0a6] focus:border-[#f07030] focus:ring-2 focus:ring-[#f07030]/10"
-                                />
-                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#c0b0a6] text-sm pointer-events-none">
-                                    🔒
-                                </span>
-                            </div>
-                        </div>
-                        <div className="mb-6">
-                            <label htmlFor="password" className="block text-[11px] font-medium tracking-[0.1em] uppercase text-[#7a6860] mb-2">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="password"
-                                    name="password"
-                                    id="password"
-                                    placeholder="••••••••"
-                                    className="w-full bg-white border border-[#e4d9d0] rounded-[10px] px-4 py-3.5 text-sm text-[#1a0f08] outline-none transition-all duration-200 shadow-sm placeholder:text-[#c0b0a6] focus:border-[#f07030] focus:ring-2 focus:ring-[#f07030]/10"
-                                />
-                                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#c0b0a6] text-sm pointer-events-none">
-                                    🔒
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Terms and conditions + Login link */}
-                        <div className="flex flex-col gap-4 mb-7">
-                            <div
-                                className="flex items-start gap-3 cursor-pointer group"
-                                onClick={() => setAgreed(a => !a)}
-                            >
-                                <div
-                                    className={`w-[18px] h-[18px] mt-0.5 rounded-[5px] border flex items-center justify-center flex-shrink-0 transition-all duration-150 ${agreed
-                                        ? 'bg-[#f07030] border-[#f07030]'
-                                        : 'bg-white border-[#d0c4ba] group-hover:border-[#f07030]'
-                                        }`}
-                                >
-                                    {agreed && (
-                                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                            <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <span className="text-[13px] text-[#7a6860] select-none leading-relaxed">
-                                    I agree to the <a href="#" className="font-medium text-[#f07030] hover:underline" onClick={(e) => e.stopPropagation()}>Terms of Service</a> and <a href="#" className="font-medium text-[#f07030] hover:underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</a>.
-                                </span>
-                                <input type="checkbox" name="terms" hidden readOnly checked={agreed} />
-                            </div>
-
-                            <div className="text-[13px] text-[#7a6860]">
-                                Already have an account?{' '}
-                                <a href="/login" className="font-medium text-[#f07030] no-underline hover:opacity-70 transition-opacity duration-150">
-                                    Log in here.
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Submit button */}
-                        <button
-                            type="submit"
-                            className="w-full py-4 bg-[#1a0f08] text-white rounded-[10px] text-sm font-medium tracking-wide cursor-pointer relative overflow-hidden transition-all duration-150 shadow-[0_4px_16px_rgba(26,15,8,0.25)] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(26,15,8,0.32)] active:translate-y-0 group"
-                        >
-                            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-br from-[rgba(240,112,48,0.22)] to-transparent" />
-                            <span className="relative z-10 flex items-center justify-center gap-2">
-                                Create Account
-                                <ArrowRight className='size-4' />
-                            </span>
-                        </button>
-                    </form>
-
-                    {/* Footer */}
-                    <div className="flex items-center gap-3 mt-8">
-                        <div className="flex-1 h-px bg-[#e4d9d0]" />
-                        <span className="text-[12px] text-[#b0a098] whitespace-nowrap">
-                            Restaurant Name here © {new Date().getFullYear()}
-                        </span>
-                        <div className="flex-1 h-px bg-[#e4d9d0]" />
-                    </div>
                 </div>
             </div>
+
         </div>
     )
 }

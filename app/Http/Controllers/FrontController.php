@@ -20,9 +20,23 @@ class FrontController extends Controller
     public function foodItemDetail(FoodItem $foodItem)
     {
         $foodItem->load('subCategory');
-        return Inertia::render('Frontend/FoodItemDetail',[
-            'fooditem'=>$foodItem
+        return Inertia::render('Frontend/FoodItemDetail', [
+            'fooditem' => $foodItem
         ]);
     }
 
+
+    public function  RegisterPage()
+    {
+        return Inertia::render('Frontend/UserAuth/UserRegister');
+    }
+
+    public function  Register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:8',
+        ]);
+    }
 }

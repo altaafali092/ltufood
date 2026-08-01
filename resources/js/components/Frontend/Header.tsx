@@ -1,5 +1,7 @@
 import React from "react";
 import { Button } from "../ui/button";
+import { Link, usePage, router } from "@inertiajs/react";
+import { loginPage, userLogout, } from "@/routes";
 
 interface HeaderProps {
     isDark: boolean;
@@ -8,12 +10,32 @@ interface HeaderProps {
     setCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+// Define the User interface matching your Laravel Auth payload
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+// Define Inertia PageProps shape
+interface PageProps {
+    auth?: {
+        user?: User | null;
+    };
+    [key: string]: unknown;
+}
+
 const Header = ({
     isDark,
     toggleTheme,
     totalItems,
     setCartOpen,
 }: HeaderProps) => {
+    // 1. Extract auth props provided by Inertia.js
+    const { auth } = usePage<PageProps>().props;
+    const user = auth?.user;
+
+
     return (
         <header className="sticky top-0 z-40 bg-[#f7f8f7]/95 dark:bg-[#080c10]/95 backdrop-blur-[18px] border-b border-black/[0.06] dark:border-white/[0.06]">
             <div className="max-w-[1200px] mx-auto px-6 py-3.5 flex items-center justify-between gap-4">
@@ -39,29 +61,42 @@ const Header = ({
 
                 <div className="flex items-center gap-4">
                     {/* Theme Toggle */}
-                    <button
+                    <Button
                         onClick={toggleTheme}
                         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
                         className="w-[38px] h-[38px] rounded-full bg-black/[0.06] dark:bg-white/[0.07] flex items-center justify-center"
                     >
                         {isDark ? "☀️" : "🌙"}
-                    </button>
-
-                    <button>Log in</button>
-
-                    <Button
-                        variant="outline"
-                        className="rounded-full border-[#6bffb8]/20 bg-[#6bffb8]/10 text-[#00a37a] hover:bg-[#6bffb8]/20 dark:text-[#6bffb8]"
-                    >
-                        Register
                     </Button>
 
+                    {/* Auth Area: Show User Name & Logout button if authenticated, else show Login Link */}
+                    {user ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                👋 {user.name}
+                            </span>
+                            <Button
+                                variant="ghost"
+                                onClick={() => router.post(userLogout().url)}
+                                className="rounded-full py-1.5 px-3 text-xs font-medium text-red-500 hover:text-red-600"
+                            >
+                                Logout
+                            </Button>
+                        </div>
+                    ) : (
+                        <Link
+                            href={loginPage().url}
+                            className="rounded-full py-1.5 px-4 shadow-sm text-sm font-medium border-b-2 bg-[#6bffb8]/10 text-[#00a37a] hover:bg-[#6bffb8]/20 dark:text-[#6bffb8]"
+                        >
+                            Login
+                        </Link>
+                    )}
 
+                    {/* Cart Button */}
                     <Button
                         onClick={() => setCartOpen(true)}
                         variant="outline"
-                        className={`rounded-full px-4 py-2
-                        ${totalItems > 0
+                        className={`rounded-full px-4 py-2 ${totalItems > 0
                                 ? "bg-gradient-to-r from-[#6bffb8] to-[#00d4aa] text-black"
                                 : "bg-black/[0.05] dark:bg-white/[0.07]"
                             }`}

@@ -59,6 +59,12 @@ export function AppSidebar() {
         {
             title: 'Sub Category',
             href: subCategories.index(),
+            icon: CakeIcon,
+            show: can('view food category'),
+        },
+        {
+            title: 'Sub Category',
+            href: subCategories.index(),
             icon: Cable,
             show: can('view sub category'),
         },

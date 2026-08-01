@@ -22,5 +22,8 @@ Route::get('/order/track/{order}', [OrderController::class, 'track'])->name('ord
 Route::get('/login', [UserAuthController::class, 'loginPage'])->name('loginPage');
 Route::post('/login', [UserAuthController::class, 'login'])->name('userLogin');
 Route::get('/register', [UserAuthController::class, 'registerPage'])->name('registerPage');
+Route::post('/register', [UserAuthController::class, 'registerUser'])->name('registerUser');
+Route::post('/userLogout', [UserAuthController::class, 'userLogout'])->name('userLogout');
+
 
 require __DIR__.'/settings.php';
