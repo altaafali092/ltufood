@@ -1,23 +1,24 @@
 import { Head, usePage } from "@inertiajs/react";
 import WelcomeComponent from "../components/Frontend/Welcome";
-import { FoodItem, SharedCart } from "@/types/frontend/Index";
+import { FoodItem } from "@/types/frontend/Index";
+import { CartItem } from "@/types";
 
 interface PageProps {
   foodItems: FoodItem[];
   canRegister: boolean;
-  cart?: SharedCart;
+  cartItems:CartItem[];
 }
 
-const WelcomePage = () => {
-  const { foodItems, canRegister, cart } = usePage<PageProps>().props;
-
+const WelcomePage = ({ foodItems, canRegister, cartItems }:PageProps) => {
+  
   return (
     <>
       <Head title="LTU Food" />
       <WelcomeComponent
         foodItems={foodItems}
         canRegister={canRegister}
-        cart={cart}
+        cartItems={cartItems}
+       
       />
     </>
   );

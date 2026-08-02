@@ -18,16 +18,4 @@ export interface FoodItem {
     subCategory?: SubCategory | null;
 }
 
-export type CartLine = {
-    food_item_id: number;
-    title: string;
-    slug: string | null;
-    price: number;
-    quantity: number;
-};
 
-export type SharedCart = {
-    items: Record<number, CartLine>;
-    count: number;
-    subtotal: number;
-};

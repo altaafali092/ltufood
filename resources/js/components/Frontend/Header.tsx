@@ -23,6 +23,7 @@ interface PageProps {
         user?: User | null;
     };
     [key: string]: unknown;
+    totalQuantity?:number
 }
 
 const Header = ({
@@ -31,8 +32,8 @@ const Header = ({
     totalItems,
     setCartOpen,
 }: HeaderProps) => {
-    // 1. Extract auth props provided by Inertia.js
-    const { auth } = usePage<PageProps>().props;
+
+    const { auth,totalPrice,totalQuantity } = usePage<PageProps>().props;
     const user = auth?.user;
 
 
@@ -102,9 +103,7 @@ const Header = ({
                             }`}
                     >
                         🛒{" "}
-                        {totalItems > 0
-                            ? `${totalItems} item${totalItems > 1 ? "s" : ""}`
-                            : "Cart"}
+                        {totalQuantity}
                     </Button>
                 </div>
             </div>

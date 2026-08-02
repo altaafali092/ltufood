@@ -44,7 +44,7 @@ class UserAuthController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User login  Successfully.')
+            'message' => __('User login😊  Successfully.')
         ]);
         
         return redirect()->intended(route('home'));
@@ -69,7 +69,7 @@ class UserAuthController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User Registered Successfully.')
+            'message' => __('User Registered 😊 Successfully.')
         ]);
 
         return to_route('loginPage');
@@ -83,7 +83,7 @@ class UserAuthController extends Controller
         $request->session()->regenerateToken();
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User Registered Successfully.')
+            'message' => __('User LogOut😔 Successfully.')
         ]);
         return to_route('home');
     }

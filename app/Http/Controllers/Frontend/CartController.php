@@ -28,7 +28,7 @@ class CartController extends Controller
         ]);
 
         $data = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1', 'max:99'],
+            'quantity' => ['required', 'integer', 'min:1'],
         ]);
 
         abort_unless($foodItem->status, 404);
@@ -36,7 +36,7 @@ class CartController extends Controller
         $cartService->addItemToCart($foodItem, $data['quantity']);
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "{$foodItem->title} added to cart successfully.",
+            'message' => "{$foodItem->title}😊 added to cart successfully.",
         ]);
 
         return back();

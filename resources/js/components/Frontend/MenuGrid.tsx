@@ -1,11 +1,15 @@
-import { FoodItem } from "@/types/frontend/Index";
+import { Link } from '@inertiajs/react';
+import { foodItemDetail } from '@/routes';
+import { FoodItem} from "@/types/frontend/Index";
+import { SharedData } from '@/types';
+import { Money } from '@/Utils/Money';
 
 type CartItem = FoodItem & { qty: number };
-type CartState = Record<number, CartItem>;
+
 
 interface MenuGridProps {
     filtered: FoodItem[];
-    cart: CartState;
+    cartItems: CartItem[];
     addToCart: (item: FoodItem) => void;
     removeFromCart: (id: number) => void;
     money: (price: number) => string;
@@ -15,17 +19,16 @@ interface MenuGridProps {
 
 export default function MenuGrid({
     filtered,
-    cart,
+    cartItems,
     addToCart,
     removeFromCart,
-    money,
     itemImage,
     itemEmoji,
 }: MenuGridProps) {
     if (filtered.length === 0) {
         return (
             <section>
-                <div className="rounded-[22px] py-16 px-6 text-center bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.07]">
+                <div className="rounded-[22px] py-16 px-6 text-center bg-black/2 dark:bg-white/3 border border-black/6 dark:border-white/[0.07]">
                     <p className="text-5xl mb-3">🍽️</p>
                     <p className="font-bold text-slate-900 dark:text-white text-base">
                         No dishes found
@@ -40,18 +43,19 @@ export default function MenuGrid({
 
     return (
         <section>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4.5">
                 {filtered.map((item) => {
                     const img = itemImage(item);
-                    const inCart = cart[item.id];
+                    const inCart = cartItems[item.id];
 
                     return (
                         <article
                             key={item.id}
-                            className="rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04]"
+                            className="rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/3 dark:bg-white/4"
                         >
                             {/* Image */}
-                            <div className="relative h-40 flex items-center justify-center bg-black/5 dark:bg-white/5">
+                            <Link href={foodItemDetail(item.slug)} className="block">
+                                <div className="relative h-40 flex items-center justify-center bg-black/5 dark:bg-white/5">
                                 {img ? (
                                     <img
                                         src={img}
@@ -70,24 +74,27 @@ export default function MenuGrid({
                                     </span>
                                 )}
 
-                                {(item.popularity_score ?? 0) >= 85 && (
+                                {/* {(item.popularity_score ?? 0) >= 85 && (
                                     <span className="absolute right-3 top-3 rounded-full bg-red-500 text-white px-2 py-1 text-xs">
                                         🔥 Hot
                                     </span>
-                                )}
+                                )} */}
                             </div>
+                         </Link> 
 
                             {/* Body */}
                             <div className="p-4 space-y-3">
                                 <div>
-                                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                                        {item.title}
-                                    </h3>
+                                    <Link href={foodItemDetail(item.slug)} className="block">
+                                        <h3 className="font-bold text-lg text-slate-900 dark:text-white">
+                                            {item.title}
+                                        </h3>
 
-                                    <p className="text-xs text-slate-500 line-clamp-2">
-                                        {item.description ??
-                                            "Freshly prepared for your table."}
-                                    </p>
+                                        <p className="text-xs text-slate-500 line-clamp-2">
+                                            {item.description ??
+                                                "check"}
+                                        </p>
+                                    </Link>
                                 </div>
 
                                 <div className="flex items-center justify-between gap-2 mt-1">
@@ -95,19 +102,19 @@ export default function MenuGrid({
                                         className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
                                         style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                                     >
-                                        {money(item.price)}
+                                        {Money(item.price)}
                                     </span>
 
                                     {inCart ? (
                                         <div className="flex items-center gap-1.5">
                                             <button
                                                 onClick={() => removeFromCart(item.id)}
-                                                className="w-[30px] h-[30px] rounded-full bg-black/[0.06] dark:bg-white/[0.08] text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
+                                                className="w-7.5 h-7.5 rounded-full bg-black/6 dark:bg-white/8 text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
                                             >−</button>
-                                            <span className="text-[13px] font-bold text-slate-900 dark:text-white w-[18px] text-center">{inCart.qty}</span>
+                                            <span className="text-[13px] font-bold text-slate-900 dark:text-white w-4.5 text-center">{inCart.qty}</span>
                                             <button
                                                 onClick={() => addToCart(item)}
-                                                className="w-[30px] h-[30px] rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
+                                                className="w-7.5 h-7.5 rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
                                             >+</button>
                                         </div>
                                     ) : (

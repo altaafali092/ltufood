@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use SebastianBergmann\CodeCoverage\Report\Xml\Totals;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -36,6 +37,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $cartService=app(CartService::class);
+        $totalQuantity= $cartService->getTotalQuantity();
+        $totalPrice=$cartService->getTotalPrice();
+        $cartItems=$cartService->getCartItems();
+
+      
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -57,11 +64,11 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'cart' => fn(): array => [
-                'items' => app(CartService::class)->all(),
-                'count' => app(CartService::class)->count(),
-                'subtotal' => app(CartService::class)->subtotal(),
-            ],
+           
+            'totalPrice'=>$totalPrice,
+            'totalQuantity'=>$totalQuantity,
+            'cartItems'=>$cartItems,
+
         ];
     }
 }
