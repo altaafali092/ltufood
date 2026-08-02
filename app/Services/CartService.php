@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\CartItem;
 use App\Models\FoodItem;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
@@ -18,36 +17,30 @@ class CartService
 
     private ?array $cachedCartItems = null;
 
+    private bool $hasMovedCookieCartToDatabase = false;
+
     protected const COOKIE_NAME = 'cartItems';
 
-    protected const COOKIE_LIFETIME = 60 * 24 * 365;   //1 year
+    protected const COOKIE_LIFETIME = 60 * 24 * 365;   // 1 year
 
     /**
      * @return array<int, array{food_item_id: int, title: string, slug: string|null, price: float, quantity: int}>
      */
     public function all(): array
     {
-        return Session::get(self::SessionKey, []);
+        return $this->getCartItems();
     }
-
-
-
-
-
 
     public function addItemToCart(FoodItem $foodItem, int $quantity = 1)
     {
 
         $price = $foodItem->price;
-
         if (Auth::check()) {
             $this->saveItemToDatabase($foodItem->id, $quantity, $price);
         } else {
-            $this->saveItemToCookies($foodItem->id, $quantity, $price,);
+            $this->saveItemToCookies($foodItem->id, $quantity, $price);
         }
     }
-
-
 
     public function updateItemQuantity(FoodItem $foodItem, int $quantity)
     {
@@ -70,8 +63,7 @@ class CartService
         }
     }
 
-    public function removeItemFromCart(int $foodItemId,)
-
+    public function removeItemFromCart(int $foodItemId)
     {
         if (Auth::check()) {
             $this->removeCartItemFromDatabase($foodItemId);
@@ -79,7 +71,6 @@ class CartService
             $this->removeCartItemsFromCookies($foodItemId);
         }
     }
-
 
     // public function getCartItems(): array
     // {
@@ -105,7 +96,6 @@ class CartService
     //                 if (!$foodItem) {
     //                     continue;
     //                 }
-
 
     //                 $cartItemData[] = [
     //                     'id' => $cartItem['id'],
@@ -146,7 +136,7 @@ class CartService
 
                 foreach ($cartItems as $cartItem) {
                     $foodItem = $foodItems->get($cartItem['food_item_id']);
-                    if (!$foodItem) {
+                    if (! $foodItem) {
                         continue;
                     }
 
@@ -169,9 +159,9 @@ class CartService
 
             return $this->cachedCartItems;
         } catch (\Exception $e) {
-            throw $e;
-            Log::error($e->getMessage() . PHP_EOL . $e->getTraceAsString());
-            return []; // Fallback empty array to satisfy the return type
+            Log::error($e->getMessage().PHP_EOL.$e->getTraceAsString());
+
+            return [];
         }
     }
 
@@ -181,31 +171,29 @@ class CartService
         foreach ($this->getCartItems() as $item) {
             $totalQuantity += $item['quantity'];
         }
+
         return $totalQuantity;
     }
+
     public function getTotalPrice(): float
     {
         $total = 0;
         foreach ($this->getCartItems() as $item) {
             $total += $item['quantity'] * $item['price'];
         }
+
         return $total;
     }
 
-
-
     public function count(): int
     {
-        return Collection::make($this->all())->sum('quantity');
+        return $this->getTotalQuantity();
     }
 
     public function subtotal(): float
     {
-        return Collection::make($this->all())
-            ->sum(fn(array $item): float => $item['price'] * $item['quantity']);
+        return $this->getTotalPrice();
     }
-
-
 
     protected function updateItemQuantityInDatabase(int $foodItemId, int $quantity): void
     {
@@ -219,7 +207,6 @@ class CartService
             ]);
         }
     }
-
 
     // protected function updateItemQuantityInCookies(int $foodItemId, int $quantity): void
     // {
@@ -236,7 +223,6 @@ class CartService
     //     Cookie::queue(self::COOKIE_NAME, json_encode($cartItems), self::COOKIE_LIFETIME);
     // }
 
-
     protected function updateItemQuantityInCookies(int $foodItemId, int $quantity): void
     {
         $cartItems = $this->getCartItemsFromCookies();
@@ -247,30 +233,7 @@ class CartService
         Cookie::queue(self::COOKIE_NAME, json_encode($cartItems), self::COOKIE_LIFETIME);
     }
 
-
-
-    // protected function saveItemToDatabase(int $foodItemId, int $quantity, $price): void
-    // {
-
-    //     $userId = Auth::id();
-    //     $cartItem = CartItem::where('user_id', $userId)
-    //         ->where('food_item_id', $foodItemId)
-    //         ->first();
-    //     if ($cartItem) {
-    //         $cartItem->update([
-    //             'quantity' => DB::raw('quantity +' . $quantity),
-    //         ]);
-    //     } else {
-    //         CartItem::create([
-    //             'user_id' => $userId,
-    //             'food_item_id' => $foodItemId,
-    //             'quantity' => $quantity,
-    //             'price' => $price,
-    //         ]);
-    //     }
-    // }
-
-    protected function saveItemToDatabase(int $foodItemId, int $quantity, $price,): void
+    protected function saveItemToDatabase(int $foodItemId, int $quantity, $price): void
     {
         $userId = Auth::id();
         $cartItem = CartItem::where('user_id', $userId)
@@ -278,7 +241,7 @@ class CartService
             ->first();
         if ($cartItem) {
             $cartItem->update([
-                'quantity' => DB::raw('quantity +' . $quantity),
+                'quantity' => DB::raw('quantity +'.$quantity),
             ]);
         } else {
             CartItem::create([
@@ -289,22 +252,6 @@ class CartService
             ]);
         }
     }
-
-
-    // protected function saveItemToCookies(int $foodItemId, int $quantity, $price): void
-    // {
-    //     $cartItems = $this->getCartItemsFromCookies();
-    //     $itemKey = $foodItemId;
-    //     $cartItems[$itemKey] = [
-    //         'id' => (string) Str::uuid(),
-    //         'food_item_id' => $foodItemId,
-    //         'quantity' => $quantity,
-    //         'price' => $price,
-    //     ];
-
-    //     Cookie::queue(self::COOKIE_NAME, json_encode($cartItems), self::COOKIE_LIFETIME);
-    // }
-
 
     protected function saveItemToCookies(int $foodItemId, int $quantity, float $price): void
     {
@@ -331,15 +278,7 @@ class CartService
         );
     }
 
-    // protected function removeCartItemFromDatabase(int $foodItemId): void
-    // {
-    //     $userId = Auth::id();
-    //     CartItem::where('user_id', $userId)
-    //     ->where('food_item_id', $foodItemId)
-    //     ->delete();
-    // }
-
-    private function removeCartItemFromDatabase(int $foodItemId,)
+    private function removeCartItemFromDatabase(int $foodItemId)
     {
         $userId = Auth::id();
         CartItem::where('user_id', $userId)
@@ -347,42 +286,12 @@ class CartService
             ->delete();
     }
 
-
-
-    // protected function removeCartItemFromCookies(int $foodItemId, int $quantity): void
-    // {
-    //     $cartItems = $this->getCartItemsFromCookies();
-    //     $cartKey = $foodItemId;
-    //     unset($cartItems[$cartKey]);
-    //     Cookie::queue(self::COOKIE_NAME, json_encode($cartItems), self::COOKIE_LIFETIME);
-    // }
-
     protected function removeCartItemsFromCookies(int $foodItemId): void
     {
         $cartItems = $this->getCartItemsFromCookies();
         unset($cartItems[(string) $foodItemId]);
         Cookie::queue(self::COOKIE_NAME, json_encode($cartItems), self::COOKIE_LIFETIME);
     }
-
-
-
-    // protected function getCartItemsFromDatabase(): array
-    // {
-    //     $userId = Auth::id();
-
-    //     return CartItem::where('user_id', $userId)
-    //         ->get()
-    //         ->map(function ($cartItem) {
-    //             return [
-    //                 'id' => $cartItem->id,
-    //                 'food_item_id' => $cartItem->food_item_id,
-    //                 'quantity' => $cartItem->quantity,
-    //                 'price' => $cartItem->price,
-    //             ];
-    //         })
-    //         ->toArray();
-    // }
-
 
     protected function getCartItemsFromDatabase(): array
     {
@@ -398,19 +307,6 @@ class CartService
             })
             ->toArray();
     }
-
-    // protected function getCartItemsFromCookies(): array
-    // {
-    //     $cookie = Cookie::get(self::COOKIE_NAME);
-
-    //     if (is_null($cookie)) {
-    //         return [];
-    //     }
-
-    //     $decoded = json_decode($cookie, true);
-
-    //     return is_array($decoded) ? $decoded : [];
-    // }
 
     protected function getCartItemsFromCookies(): array
     {
@@ -428,30 +324,38 @@ class CartService
     public function getCartItemsGrouped(): array
     {
         $cartItems = $this->getCartItems();
+
         return collect($cartItems)
-            ->groupBy(fn($item) => $item['user']['id'])
-            ->map(fn($items, $userId) => [
+            ->groupBy(fn ($item) => $item['user']['id'])
+            ->map(fn ($items, $userId) => [
                 'user' => $items->first()['user'],
                 'items' => $items->toArray(),
                 'totalQuantity' => $items->sum('quantity'),
-                'totalPrice' => $items->sum(fn($item) => $item['price'] * $item['quantity'],)
+                'totalPrice' => $items->sum(fn ($item) => $item['price'] * $item['quantity']),
             ])->toArray();
     }
 
     public function moveCartItemsToDatabase($userId): void
     {
+        if ($this->hasMovedCookieCartToDatabase) {
+            return;
+        }
+
+        $this->hasMovedCookieCartToDatabase = true;
         $cartItems = $this->getCartItemsFromCookies();
 
-        foreach ($cartItems as $itemKey => $cartItem) {
+        if ($cartItems === []) {
+            return;
+        }
 
-            // Check if the item already exists in the user's cart
+        foreach ($cartItems as $cartItem) {
             $existingItem = CartItem::where('user_id', $userId)
                 ->where('food_item_id', $cartItem['food_item_id'])
                 ->first();
 
             if ($existingItem) {
                 $existingItem->update([
-                    'quantity' => $existingItem->quantity + $cartItem['quantity'],
+                    'quantity' => max($existingItem->quantity, $cartItem['quantity']),
                     'price' => $cartItem['price'],
                 ]);
             } else {
@@ -465,9 +369,8 @@ class CartService
         }
 
         Cookie::queue(Cookie::forget(self::COOKIE_NAME));
+        $this->cachedCartItems = null;
     }
-
-
 
     private function put(array $items): void
     {
