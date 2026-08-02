@@ -37,12 +37,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $cartService=app(CartService::class);
-        $totalQuantity= $cartService->getTotalQuantity();
-        $totalPrice=$cartService->getTotalPrice();
-        $cartItems=$cartService->getCartItems();
+        $cartService = app(CartService::class);
+        $totalQuantity = $cartService->getTotalQuantity();
+        $totalPrice = $cartService->getTotalPrice();
+        $cartItems = $cartService->getCartItems();
 
-      
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -64,10 +64,11 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-           
-            'totalPrice'=>$totalPrice,
-            'totalQuantity'=>$totalQuantity,
-            'cartItems'=>$cartItems,
+
+            'totalPrice' => $totalPrice,
+            'totalQuantity' => $totalQuantity,
+            'cartItems' => $cartItems,
+            'subtotal' => $cartService->subtotal(),
 
         ];
     }

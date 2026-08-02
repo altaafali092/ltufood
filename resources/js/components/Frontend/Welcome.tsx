@@ -26,7 +26,7 @@ const itemEmoji = (item: FoodItem): string =>
 
 interface WelcomeProps {
   foodItems: FoodItem[];
-  cartItems: CartItem;
+  cartItems: CartItem[];
   totalQuantity: number;
   totalPrice: number;
 }

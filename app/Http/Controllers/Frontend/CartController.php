@@ -42,25 +42,47 @@ class CartController extends Controller
         return back();
     }
 
+    // public function update(Request $request, FoodItem $foodItem, CartService $cartService): RedirectResponse
+    // {
+    //     $request->validate([
+    //         'quantity' => ['integer', 'min:1'],
+    //     ]);
+
+    //     $quantity = $request->input('quantity');
+
+    //     $cartService->updateItemQuantity($foodItem, $quantity);
+    //     Inertia::flash('toast', ['type' => 'success', 'message' => __('Quantity was updated')]);
+
+    //     return back();
+    // }
+
+
     public function update(Request $request, FoodItem $foodItem, CartService $cartService): RedirectResponse
     {
         $request->validate([
-            'quantity' => ['integer', 'min:1'],
+            'quantity' => ['required', 'integer'],
         ]);
 
-        $quantity = $request->input('quantity');
+        $cartService->updateItemQuantity($foodItem, (int) $request->quantity);
 
-        $cartService->updateItemQuantity($foodItem, $quantity);
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Quantity was updated')]);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Quantity was updated'),
+        ]);
 
         return back();
     }
 
+
+
     public function destroy(FoodItem $foodItem, CartService $cartService): RedirectResponse
     {
+        $cartService->removeItemFromCart($foodItem->id);
 
-        $cartService->removeItemFromCart($foodItem);
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Food was removed from Cart.')]);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Food was removed from Cart.'),
+        ]);
 
         return back();
     }

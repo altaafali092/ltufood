@@ -1,18 +1,14 @@
 import { Link } from '@inertiajs/react';
 import { foodItemDetail } from '@/routes';
-import { FoodItem} from "@/types/frontend/Index";
-import { SharedData } from '@/types';
+import { FoodItem } from "@/types/frontend/Index";
 import { Money } from '@/Utils/Money';
-
-type CartItem = FoodItem & { qty: number };
-
+import { CartItem } from "@/types";
 
 interface MenuGridProps {
     filtered: FoodItem[];
     cartItems: CartItem[];
     addToCart: (item: FoodItem) => void;
     removeFromCart: (id: number) => void;
-    money: (price: number) => string;
     itemImage: (item: FoodItem) => string | null;
     itemEmoji: (item: FoodItem) => string;
 }
@@ -46,41 +42,38 @@ export default function MenuGrid({
             <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4.5">
                 {filtered.map((item) => {
                     const img = itemImage(item);
-                    const inCart = cartItems[item.id];
+                    
+                    // Match using food_item_id from the global CartItem type
+                    const inCart = cartItems.find((cart) => cart.food_item_id === item.id);
+                    const quantity = inCart ? inCart.quantity : 0;
 
                     return (
                         <article
                             key={item.id}
                             className="rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 bg-black/3 dark:bg-white/4"
                         >
-                            {/* Image */}
+                            {/* Image Header */}
                             <Link href={foodItemDetail(item.slug)} className="block">
                                 <div className="relative h-40 flex items-center justify-center bg-black/5 dark:bg-white/5">
-                                {img ? (
-                                    <img
-                                        src={img}
-                                        alt={item.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <span className="text-6xl">
-                                        {itemEmoji(item)}
-                                    </span>
-                                )}
+                                    {img ? (
+                                        <img
+                                            src={img}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="text-6xl">
+                                            {itemEmoji(item)}
+                                        </span>
+                                    )}
 
-                                {item.sub_category?.title && (
-                                    <span className="absolute left-3 top-3 rounded-full bg-[#6bffb8]/20 px-3 py-1 text-xs font-semibold">
-                                        {item.sub_category.title}
-                                    </span>
-                                )}
-
-                                {/* {(item.popularity_score ?? 0) >= 85 && (
-                                    <span className="absolute right-3 top-3 rounded-full bg-red-500 text-white px-2 py-1 text-xs">
-                                        🔥 Hot
-                                    </span>
-                                )} */}
-                            </div>
-                         </Link> 
+                                    {item.sub_category?.title && (
+                                        <span className="absolute left-3 top-3 rounded-full bg-[#6bffb8]/20 px-3 py-1 text-xs font-semibold">
+                                            {item.sub_category.title}
+                                        </span>
+                                    )}
+                                </div>
+                            </Link> 
 
                             {/* Body */}
                             <div className="p-4 space-y-3">
@@ -91,34 +84,39 @@ export default function MenuGrid({
                                         </h3>
 
                                         <p className="text-xs text-slate-500 line-clamp-2">
-                                            {item.description ??
-                                                "check"}
+                                            {item.description ?? "Delicious fresh item prepared to order."}
                                         </p>
                                     </Link>
                                 </div>
 
                                 <div className="flex items-center justify-between gap-2 mt-1">
-                                    <span
-                                        className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
-                                        style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-                                    >
+                                    <span className="text-[18px] font-bold text-[#00a37a] dark:text-[#6bffb8]">
                                         {Money(item.price)}
                                     </span>
 
-                                    {inCart ? (
+                                    {quantity > 0 ? (
                                         <div className="flex items-center gap-1.5">
                                             <button
+                                                type="button"
                                                 onClick={() => removeFromCart(item.id)}
                                                 className="w-7.5 h-7.5 rounded-full bg-black/6 dark:bg-white/8 text-slate-900 dark:text-white border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:bg-black/15 dark:hover:bg-white/20 transition-colors"
-                                            >−</button>
-                                            <span className="text-[13px] font-bold text-slate-900 dark:text-white w-4.5 text-center">{inCart.qty}</span>
+                                            >
+                                                −
+                                            </button>
+                                            <span className="text-[13px] font-bold text-slate-900 dark:text-white w-4.5 text-center">
+                                                {quantity}
+                                            </span>
                                             <button
+                                                type="button"
                                                 onClick={() => addToCart(item)}
                                                 className="w-7.5 h-7.5 rounded-full bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] border-none cursor-pointer text-[15px] font-bold flex items-center justify-center hover:opacity-90 transition-opacity"
-                                            >+</button>
+                                            >
+                                                +
+                                            </button>
                                         </div>
                                     ) : (
                                         <button
+                                            type="button"
                                             onClick={() => addToCart(item)}
                                             className="px-4 py-2 rounded-full text-xs font-semibold bg-[#6bffb8]/10 text-[#00a37a] dark:text-[#6bffb8] border border-[#6bffb8]/22 cursor-pointer hover:bg-[#6bffb8]/20 transition-colors"
                                         >
