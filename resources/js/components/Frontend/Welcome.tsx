@@ -297,9 +297,8 @@ export default function Welcome({
       {/* Floating Cart Bar */}
       {totalQuantity > 0 && !cartOpen && (
         <FloatingCartBar
-          totalItems={totalQuantity}
+          totalQuantity={totalQuantity}
           subtotal={totalPrice}
-          money={money}
           onOpenCart={() => setCartOpen(true)}
         />
       )}
