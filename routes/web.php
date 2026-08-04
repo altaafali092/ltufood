@@ -35,9 +35,9 @@ Route::post('/register', [UserAuthController::class, 'registerUser'])->name('reg
 Route::post('/userLogout', [UserAuthController::class, 'userLogout'])->name('userLogout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('orders.payment');
-    Route::post('/orders/{order}/payment', [PaymentController::class, 'process'])->name('orders.payment.process');
-    Route::get('/orders/{order}/receipt', [PaymentController::class, 'receipt'])->name('orders.receipt');
+    Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('orderPayment');
+    Route::post('/orders/{order}/payment', [PaymentController::class, 'process'])->name('orderPaymentProcess');
+    Route::get('/orders/{order}/receipt', [PaymentController::class, 'receipt'])->name('ordersReceipt');
 
     // Your Existing eSewa routes
     Route::get('/esewa/initiate/{order}', [EsewaController::class, 'initiate'])->name('esewa.initiate');

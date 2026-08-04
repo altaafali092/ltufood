@@ -5,6 +5,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CreditCard, ChevronDown } from 'lucide-react';
 import { Money } from '@/Utils/Money';
+import { orderPayment } from '@/routes';
 
 // ==========================================
 // Types & Interfaces
@@ -33,7 +34,7 @@ interface Table {
 interface Order {
   id: number;
   order_number: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'paid' | 'cancelled';
+  status: 'Pending' | 'Preparing' | 'Ready' | 'Served' | 'Paid' | 'Cancelled';
   payment_status: 'paid' | 'unpaid';
   payment_method: string;
   order_type: string;
@@ -97,11 +98,10 @@ const PaymentStatusBadge: React.FC<{ status: Order['payment_status'] }> = ({
   const isPaid = status === 'paid';
   return (
     <span
-      className={`px-2 py-0.5 text-[11px] font-medium rounded-md border capitalize ${
-        isPaid
-          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50'
-          : 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50'
-      }`}
+      className={`px-2 py-0.5 text-[11px] font-medium rounded-md border capitalize ${isPaid
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50'
+        : 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50'
+        }`}
     >
       {status}
     </span>
@@ -150,7 +150,7 @@ const OrderCard: React.FC<{
   onToggleExpand: (id: number) => void;
 }> = ({ order, isExpanded, onToggleExpand }) => {
   const isTrackable = ['pending', 'preparing', 'ready'].includes(order.status);
-  const canPay = order.payment_status === 'unpaid' && order.status !== 'cancelled';
+  // const canPay = order.payment_status === 'unpaid' && order.status !== 'cancelled';
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-xs overflow-hidden transition-all hover:border-gray-200 dark:hover:border-slate-700">
@@ -193,14 +193,15 @@ const OrderCard: React.FC<{
           </div>
 
           <div className="flex items-center gap-2">
-            {canPay && (
+            {order?.status === 'Served' && (
               <Link
-                href={`/orders/${order.id}/payment`}
+                href={orderPayment(order.id)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors shadow-2xs"
               >
                 <CreditCard className="w-3.5 h-3.5" />
                 Make Payment
               </Link>
+
             )}
 
             {isTrackable && (
@@ -219,9 +220,8 @@ const OrderCard: React.FC<{
             >
               <span>{isExpanded ? 'Hide Details' : 'View Details'}</span>
               <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                  isExpanded ? 'rotate-180' : ''
-                }`}
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''
+                  }`}
               />
             </button>
           </div>
