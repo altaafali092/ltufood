@@ -5,77 +5,128 @@ namespace App\Http\Controllers;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Table;
+use App\Services\CartService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class OrderController extends Controller
 {
-
-    public function store(Request $request, Table $table)
+    public function store(Request $request, CartService $cartService): RedirectResponse
     {
         $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.menu_item_id' => 'required|exists:menu_items,id',
-            'items.*.quantity'     => 'required|integer|min:1',
-            'items.*.special_notes'=> 'nullable|string',
-            'mood'                 => 'nullable|string|in:happy,sad,energetic,comfort,spicy,light',
-            'customer_lat'         => 'nullable|numeric',
-            'customer_lng'         => 'nullable|numeric',
+            'table_id' => ['nullable', 'exists:tables,id'],
+            'order_type' => ['nullable', 'string', 'in:dine_in,takeaway,delivery'],
+            'payment_method' => ['nullable', 'string', 'in:cash_at_reception,esewa,card,khalti'],
+            'mood' => ['nullable', 'string', 'in:happy,sad,energetic,comfort,spicy,light'],
+            'customer_lat' => ['nullable', 'numeric'],
+            'customer_lng' => ['nullable', 'numeric'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        // Create Order
-        $order = Order::create([
-            'table_id'      => $table->id,
-            'customer_id'   => Auth::id(), // null for guest
-            'status'        => 'pending',
-            'mood'          => $validated['mood'],
-            'customer_lat'  => $validated['customer_lat'],
-            'customer_lng'  => $validated['customer_lng'],
-        ]);
+        $cartItems = $cartService->getCartItems();
 
-        // Add Order Items
-        foreach ($validated['items'] as $item) {
-            $foodItem = FoodItem::findOrFail($item['menu_item_id']);
-            OrderItem::create([
-                'order_id'       => $order->id,
-                'food_item_id'   => $foodItem->id,
-                'quantity'       => $item['quantity'],
-                'price_at_time'  => $foodItem->price,
-                'special_notes'  => $item['special_notes'] ?? null,
+        if ($cartItems === []) {
+            return back()->withErrors([
+                'cart' => __('Your cart is empty.'),
             ]);
         }
 
-        $order->calculateTotal();
-        $table->update(['is_occupied' => true]);
+        $foodItems = FoodItem::whereIn('id', collect($cartItems)->pluck('food_item_id'))
+            ->get()
+            ->keyBy('id');
 
-        // Broadcast real-time event
-        // broadcast(new \App\Events\OrderPlaced($order))->toOthers();
+        $subtotal = collect($cartItems)->sum(function (array $cartItem) use ($foodItems): float {
+            $foodItem = $foodItems->get($cartItem['food_item_id']);
 
-        // return redirect()->route('order.track', $order->id)
-        //     ->with('success', 'Order placed successfully!');
-        return "order successfully placed";
+            if (! $foodItem || ! $foodItem->status) {
+                return 0;
+            }
+
+            return (float) $foodItem->price * (int) $cartItem['quantity'];
+        });
+
+        if ($subtotal <= 0) {
+            return back()->withErrors([
+                'cart' => __('Your cart does not contain available food items.'),
+            ]);
+        }
+
+        $order = DB::transaction(function () use ($cartItems, $cartService, $foodItems, $subtotal, $validated): Order {
+            $order = Order::create([
+                'order_number' => $this->generateOrderNumber(),
+                'table_id' => $validated['table_id'] ?? null,
+                'customer_id' => Auth::id(),
+                'order_type' => $validated['order_type'] ?? 'dine_in',
+                'status' => 'pending',
+                'payment_method' => $validated['payment_method'] ?? 'cash_at_reception',
+                'payment_status' => 'unpaid',
+                'subtotal' => $subtotal,
+                'discount_amount' => 0,
+                'tax_amount' => 0,
+                'total' => $subtotal,
+                'mood' => $validated['mood'] ?? null,
+                'customer_lat' => $validated['customer_lat'] ?? null,
+                'customer_lng' => $validated['customer_lng'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            foreach ($cartItems as $cartItem) {
+                $foodItem = $foodItems->get($cartItem['food_item_id']);
+
+                if (! $foodItem || ! $foodItem->status) {
+                    continue;
+                }
+
+                $quantity = (int) $cartItem['quantity'];
+                $price = (float) $foodItem->price;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'food_item_id' => $foodItem->id,
+                    'quantity' => $quantity,
+                    'price_at_time' => $price,
+                    'total_price' => $price * $quantity,
+                ]);
+            }
+
+            $cartService->clearCart();
+
+            return $order;
+        });
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Order placed successfully.'),
+        ]);
+
+        return back()->with('order_id', $order->id);
     }
-    
-    public function track(Order $order)
+
+    public function track(Order $order): Response
     {
         return Inertia::render('Customer/TrackOrder', [
-            'order' => $order->load('items.foodItem', 'table')
+            'order' => $order->load('items.foodItem', 'table'),
         ]);
     }
 
     /**
      * Admin: List all orders
      */
-    public function index()
+    public function index(): Response
     {
-        $orders = Order::with(['table', 'customer', 'items.foodItem'])
+        // Fetch orders belonging to the authenticated user
+        $orders = Order::where('customer_id', Auth::id())
+            ->with(['table', 'items.foodItem'])
             ->latest()
             ->get();
 
-        return Inertia::render('Admin/Orders/Index', [
-            'orders' => $orders
+        return Inertia::render('Frontend/Order/Index', [
+            'orders' => $orders,
         ]);
     }
     /**
@@ -102,10 +153,11 @@ class OrderController extends Controller
     // }
 
 
-public function updateStatus(Request $request, Order $order)
+    
+    public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:preparing,ready,served,paid,cancelled'
+            'status' => 'required|in:preparing,ready,served,paid,cancelled',
         ]);
 
         $order->update(['status' => $validated['status']]);
@@ -120,4 +172,12 @@ public function updateStatus(Request $request, Order $order)
         return back()->with('success', 'Status updated.');
     }
 
+    private function generateOrderNumber(): string
+    {
+        do {
+            $orderNumber = 'ORD-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
+        } while (Order::where('order_number', $orderNumber)->exists());
+
+        return $orderNumber;
+    }
 }

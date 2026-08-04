@@ -2,8 +2,11 @@ import { Link } from '@inertiajs/react';
 import {
     Cable,
     CakeIcon,
+    icons,
     KeyRound,
     LayoutGrid,
+    ListOrdered,
+    ListOrderedIcon,
     LockKeyhole,
     Table2,
     User2,
@@ -30,8 +33,8 @@ import tables from '@/routes/admin/tables';
 import foodCategories from '@/routes/admin/food-categories';
 import subCategories from '@/routes/admin/sub-categories';
 import foodItems from '@/routes/admin/food-items';
-
 import { useCan } from '@/hooks/use-can';
+import userOrders from '@/routes/admin/userOrders';
 
 export function AppSidebar() {
     const can = useCan();
@@ -44,11 +47,18 @@ export function AppSidebar() {
             show: true,
         },
         {
+            title: 'Order List',
+            href: userOrders.index(),
+            icon: ListOrderedIcon,
+            show: true,
+        },
+      
+        {
             title: 'Tables',
             href: tables.index(),
             icon: Table2,
             show: can('view table'),
-           
+
         },
         {
             title: 'Food Category',
@@ -92,6 +102,7 @@ export function AppSidebar() {
             icon: User2,
             show: can('view users'),
         },
+        
     ].filter(item => item.show);
 
     return (

@@ -13,14 +13,16 @@ class OrderItem extends Model
 
     protected $fillable = [
         'order_id',
-        'menu_item_id',
+        'food_item_id',
         'quantity',
         'price_at_time',
+        'total_price',
         'special_notes',
     ];
 
     protected $casts = [
         'price_at_time' => 'decimal:2',
+        'total_price' => 'decimal:2',
     ];
 
     public function order(): BelongsTo

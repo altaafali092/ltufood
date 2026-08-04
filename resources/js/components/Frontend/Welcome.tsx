@@ -5,17 +5,12 @@ import { FoodItem } from "@/types/frontend/Index";
 import FilterBar from "./FilterBar";
 import MenuGrid from "./MenuGrid";
 import { Link, router } from "@inertiajs/react";
-import { cartStore, cartUpdate, foodItemDetail } from "@/routes";
+import { cartStore, cartUpdate, foodItemDetail, ordersStore } from "@/routes";
 import FloatingCartBar from "./FloatingCartBar";
 import CartDrawer, { CartState } from "./CartDrawer";
 import { CartItem } from "@/types";
+import { Money } from "@/Utils/Money";
 
-const money = (price: number) =>
-  new Intl.NumberFormat("en-NP", {
-    style: "currency",
-    currency: "NPR",
-    maximumFractionDigits: 0,
-  }).format(Number(price || 0));
 
   
 const itemImage = (item: FoodItem): string | null =>
@@ -46,6 +41,7 @@ export default function Welcome({
   const [category, setCategory] = useState("All");
   const [cartOpen, setCartOpen] = useState(false);
   const [ordered, setOrdered] = useState(false);
+  const [orderProcessing, setOrderProcessing] = useState(false);
 
   const { resolvedAppearance, updateAppearance } = useAppearance();
   const isDark = resolvedAppearance === "dark";
@@ -127,11 +123,27 @@ export default function Welcome({
   };
 
   const placeOrder = () => {
-    setOrdered(true);
-    setTimeout(() => {
-      setOrdered(false);
-      setCartOpen(false);
-    }, 3200);
+    if (Object.keys(cart).length === 0 || orderProcessing) {
+      return;
+    }
+
+    setOrderProcessing(true);
+
+    router.post(
+      ordersStore().url,
+      {},
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setOrdered(true);
+          setTimeout(() => {
+            setOrdered(false);
+            setCartOpen(false);
+          }, 3200);
+        },
+        onFinish: () => setOrderProcessing(false),
+      },
+    );
   };
 
   return (
@@ -192,7 +204,7 @@ export default function Welcome({
                       className="text-[26px] font-bold text-[#00a37a] dark:text-[#6bffb8]"
                       style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
-                      {money(hero.price)}
+                      {Money(hero.price)}
                     </span>
                     <button
                       onClick={() => addToCart(hero)}
@@ -263,7 +275,7 @@ export default function Welcome({
                             {item.title}
                           </p>
                           <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                            {money(item.price)}
+                            {Money(item.price)}
                           </p>
                         </div>
                       </Link>
@@ -286,7 +298,7 @@ export default function Welcome({
               cartItems={cartItems}
               addToCart={addToCart}
               removeFromCart={removeFromCart}
-              money={money}
+              money={Money}
               itemImage={itemImage}
               itemEmoji={itemEmoji}
             />
@@ -312,7 +324,7 @@ export default function Welcome({
           onClose={() => setCartOpen(false)}
           onOrder={placeOrder}
           ordered={ordered}
-          money={money}
+          money={Money}
           itemImage={itemImage}
           itemEmoji={itemEmoji}
         />

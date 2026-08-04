@@ -72,51 +72,6 @@ class CartService
         }
     }
 
-    // public function getCartItems(): array
-    // {
-    //     try {
-    //         if ($this->cachedCartItems === null) {
-    //             if (Auth::check()) {
-    //                 $cartItems = $this->getCartItemsFromDatabase();
-    //             } else {
-    //                 $cartItems = $this->getCartItemsFromCookies();
-    //             }
-
-    //             $foodItemIds = collect($cartItems)
-    //                 ->pluck('food_item_id')
-    //                 ->unique();
-    //             $foodItems = FoodItem::whereIn('id', $foodItemIds)
-    //                 ->get()
-    //                 ->keyBy('id');
-
-    //             $cartItemData = [];
-
-    //             foreach ($cartItems as $cartItem) {
-    //                 $foodItem = $foodItems->get($cartItem['food_item_id']);
-    //                 if (!$foodItem) {
-    //                     continue;
-    //                 }
-
-    //                 $cartItemData[] = [
-    //                     'id' => $cartItem['id'],
-    //                     'food_item_id' => $foodItem->id,
-    //                     'title' => $foodItem->title,
-    //                     'slug' => $foodItem->slug,
-    //                     'price' => $cartItem['price'],
-    //                     'quantity' => $cartItem['quantity'],
-    //                 ];
-    //             }
-
-    //             // ✅ Set to cached property
-    //             $this->cachedCartItems = $cartItemData;
-    //         }
-
-    //         return $this->cachedCartItems;
-    //     } catch (\Exception $e) {
-    //         Log::error($e->getMessage() . PHP_EOL . $e->getTraceAsString());
-    //         return []; // Fallback empty array to satisfy the return type
-    //     }
-    // }
     public function getCartItems(): array
     {
         try {

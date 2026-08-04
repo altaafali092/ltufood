@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'esewa' => [
+        'merchant_code' => env('ESEWA_MERCHANT_CODE', 'EPAYTEST'),
+        'secret_key' => env('ESEWA_SECRET_KEY', '8gBmUz3q1GE0MBDWG2A85377A3A6aB6A'),
+        'url' => env('ESEWA_URL', 'https://rc-epay.esewa.com.np/api/epay/main/v2/form'),
+    ],
+
 ];

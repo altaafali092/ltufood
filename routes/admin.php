@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\DashbaordController;
 use App\Http\Controllers\Admin\FoodCategoryController;
 use App\Http\Controllers\Admin\FoodItemController;
+use App\Http\Controllers\Admin\OrderUserController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SubCategoryController;
@@ -18,13 +19,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('sub-categories', SubCategoryController::class);
     Route::resource('tables', TableController::class);
 
-    Route::get('/orders', [OrderController::class, 'index'])->name('orderIndex');
-    Route::post('/orders/{order}/assign', [OrderController::class, 'assign'])->name('orderAssign');
-    Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orderStatusUpdate');
+    Route::resource('userOrders', OrderUserController::class);
+    Route::patch('orderUser/{orderUser}', [OrderUserController::class, 'status'])
+        ->name('orderStatus');
 
 
-    Route::resource('permission',PermissionController::class);
-    Route::resource('role',RoleController::class);
-    Route::resource('user',UserController::class);
-
+    Route::resource('permission', PermissionController::class);
+    Route::resource('role', RoleController::class);
+    Route::resource('user', UserController::class);
 });

@@ -35,28 +35,8 @@ export default function FoodItemDetailPage() {
   const isPopular = (fooditem.popularity_score ?? 0) >= 85
   const totalPrice = useMemo(() => fooditem.price * qty, [fooditem.price, qty])
 
-  // Handlers
-  // const handleAddToCart = () => {
-  //   if (processing || !fooditem.status) return
 
-  //   setProcessing(true)
-  //   setAdded(false)
-
-  //   router.post(
-  //     cartStore(fooditem.id).url,
-  //     { quantity: qty, spice_level: selectedSpice },
-  //     {
-  //       preserveScroll: true,
-  //       onSuccess: () => {
-  //         setAdded(true)
-  //         setTimeout(() => setAdded(false), 2000)
-  //       },
-  //       onFinish: () => setProcessing(false),
-  //     },
-  //   )
-  // }
-
-
+  
   const form = useForm({
     quantity: 1,
     price: fooditem.price,
