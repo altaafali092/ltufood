@@ -5,7 +5,7 @@ import { useAppearance } from '@/hooks/use-appearance';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, CreditCard, ChevronDown } from 'lucide-react';
 import { Money } from '@/Utils/Money';
-import { orderPayment } from '@/routes';
+import { orderPayment, orderTrack } from '@/routes';
 
 // ==========================================
 // Types & Interfaces
@@ -204,14 +204,16 @@ const OrderCard: React.FC<{
 
             )}
 
-            {isTrackable && (
+            {order.payment_status === "unpaid" && (
               <Link
-                href={`/orders/${order.id}/track`}
+                href={orderTrack(order.id)}
                 className="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg transition-colors"
               >
                 Track Live
               </Link>
             )}
+
+
 
             <button
               type="button"

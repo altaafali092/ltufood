@@ -107,12 +107,16 @@ class OrderController extends Controller
         return back()->with('order_id', $order->id);
     }
 
-    public function track(Order $order): Response
+    public function track(Order $order)
     {
-        return Inertia::render('Customer/TrackOrder', [
-            'order' => $order->load('items.foodItem', 'table'),
+        // Eager load relationships needed for the track page
+        $order->load(['items.foodItem', 'table']);
+
+        return Inertia::render('Frontend/Order/TrackOrder', [
+            'order' => $order,
         ]);
     }
+
 
     /**
      * Admin: List all orders
@@ -153,7 +157,7 @@ class OrderController extends Controller
     // }
 
 
-    
+
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $validated = $request->validate([

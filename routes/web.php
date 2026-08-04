@@ -21,7 +21,7 @@ Route::controller(CartController::class)->group(function () {
 
 
 Route::post('/orders', [OrderController::class, 'store'])->name('ordersStore');
-Route::get('/order/track/{order}', [OrderController::class, 'track'])->name('orderTrack');
+
 
 
 Route::get('/orders', [OrderController::class, 'index'])->name('orderIndex');
@@ -35,6 +35,9 @@ Route::post('/register', [UserAuthController::class, 'registerUser'])->name('reg
 Route::post('/userLogout', [UserAuthController::class, 'userLogout'])->name('userLogout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/order/track/{order}', [OrderController::class, 'track'])->name('orderTrack');
+
+
     Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('orderPayment');
     Route::post('/orders/{order}/payment', [PaymentController::class, 'process'])->name('orderPaymentProcess');
     Route::get('/orders/{order}/receipt', [PaymentController::class, 'receipt'])->name('ordersReceipt');
@@ -43,7 +46,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/esewa/initiate/{order}', [EsewaController::class, 'initiate'])->name('esewa.initiate');
     Route::get('/esewa/success', [EsewaController::class, 'success'])->name('esewa.success');
     Route::get('/esewa/failure', [EsewaController::class, 'failure'])->name('esewa.failure');
-
 });
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
