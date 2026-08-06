@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { Money } from '@/Utils/Money';
-import { 
-  Utensils, 
-  Clock, 
-  CheckCircle2, 
-  ChefHat, 
+import {
+  Utensils,
+  Clock,
+  CheckCircle2,
+  ChefHat,
   AlertCircle,
   ArrowLeft,
   Receipt
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useEcho } from '@laravel/echo-react';
 
 interface OrderItem {
   id: number;
@@ -23,7 +24,7 @@ interface OrderItem {
 interface Order {
   id: number;
   order_number: string;
-  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  status: 'Pending' | 'Preparing' | 'Ready' | 'Served' | 'Cancelled';
   payment_status: 'paid' | 'unpaid';
   payment_method: string;
   total: number;
@@ -32,22 +33,35 @@ interface Order {
   items: OrderItem[];
 }
 
-export default function OrderTrack({ order }: { order: Order }) {
-  // Timeline steps configuration
+export default function OrderTrack({ order: initialOrder }: { order: Order }) {
+  const [order, setOrder] = useState<Order>(initialOrder);
+  // Inside OrderTrack component:
+
+  useEcho(`orders.${initialOrder.id}`, '.OrderStatusUpdated', (event: { order: { id: number; status: Order['status'] } }) => {
+    if (event?.order?.status) {
+      setOrder((prevOrder) => ({
+        ...prevOrder,
+        status: event.order.status,
+      }));
+    }
+    
+  });
+  console.log(window.Echo);
+
   const steps = [
-    { key: 'pending', label: 'Order Received', icon: Clock },
-    { key: 'preparing', label: 'Preparing Food', icon: ChefHat },
-    { key: 'ready', label: 'Ready to Serve', icon: Utensils },
-    { key: 'delivered', label: 'Completed', icon: CheckCircle2 },
+    { key: 'Pending', label: 'Order Received', icon: Clock },
+    { key: 'Preparing', label: 'Preparing Food', icon: ChefHat },
+    { key: 'Ready', label: 'Ready to Serve', icon: Utensils },
+    { key: 'Served', label: 'Served & Completed', icon: CheckCircle2 },
   ];
 
-  // Helper to determine step progress
   const getStepStatus = (stepKey: string, currentStatus: string) => {
-    const statusOrder = ['pending', 'preparing', 'ready', 'delivered'];
+    if (currentStatus === 'Cancelled') return 'cancelled';
+
+    const statusOrder = ['Pending', 'Preparing', 'Ready', 'Served'];
     const currentIndex = statusOrder.indexOf(currentStatus);
     const stepIndex = statusOrder.indexOf(stepKey);
 
-    if (currentStatus === 'cancelled') return 'cancelled';
     if (stepIndex < currentIndex) return 'completed';
     if (stepIndex === currentIndex) return 'current';
     return 'upcoming';
@@ -58,7 +72,7 @@ export default function OrderTrack({ order }: { order: Order }) {
       <Head title={`Track Order #${order.order_number}`} />
 
       <div className="max-w-md mx-auto space-y-4">
-        
+
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
           <Link
@@ -76,7 +90,7 @@ export default function OrderTrack({ order }: { order: Order }) {
 
         {/* Main Tracking Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-6">
-          
+
           {/* Header Status */}
           <div className="text-center pb-4 border-b border-dashed border-slate-200 dark:border-slate-800">
             <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
@@ -91,7 +105,7 @@ export default function OrderTrack({ order }: { order: Order }) {
           </div>
 
           {/* Cancelled State */}
-          {order.status === 'cancelled' ? (
+          {order.status === 'Cancelled' ? (
             <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 flex items-center gap-3 text-rose-800 dark:text-rose-300">
               <AlertCircle className="w-5 h-5 shrink-0" />
               <div className="text-xs">
@@ -113,24 +127,22 @@ export default function OrderTrack({ order }: { order: Order }) {
                   return (
                     <div key={step.key} className="relative z-10 flex flex-col items-center">
                       <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                          status === 'completed'
-                            ? 'bg-emerald-600 text-white'
-                            : status === 'current'
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${status === 'completed'
+                          ? 'bg-emerald-600 text-white'
+                          : status === 'current'
                             ? 'bg-emerald-500 text-white ring-4 ring-emerald-100 dark:ring-emerald-950/60 scale-110'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-400'
-                        }`}
+                          }`}
                       >
                         <Icon className="w-4 h-4" />
                       </div>
                       <span
-                        className={`text-[10px] font-bold mt-2 text-center max-w-[70px] leading-tight ${
-                          status === 'current'
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : status === 'completed'
+                        className={`text-[10px] font-bold mt-2 text-center max-w-[70px] leading-tight ${status === 'current'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : status === 'completed'
                             ? 'text-slate-800 dark:text-slate-200'
                             : 'text-slate-400'
-                        }`}
+                          }`}
                       >
                         {step.label}
                       </span>
@@ -163,7 +175,7 @@ export default function OrderTrack({ order }: { order: Order }) {
                 <div key={item.id} className="flex justify-between text-xs">
                   <div>
                     <span className="font-semibold text-slate-800 dark:text-slate-200">
-                      {item.food_item?.title}
+                      {item.food_item?.title || 'Food Item'}
                     </span>
                     <span className="text-slate-400 ml-2">× {item.quantity}</span>
                   </div>

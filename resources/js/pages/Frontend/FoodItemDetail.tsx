@@ -1,12 +1,13 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState, useMemo } from 'react'
 import { ChevronLeft, Share2, Heart, Check, Loader2 } from 'lucide-react'
-import { formatMoney } from '@/lib/frontend/format-money'
+
 import { useAppearance } from '@/hooks/use-appearance'
 import { QuantityControls } from '@/components/Frontend/QuantityControls'
 import Header from '@/components/Frontend/Header'
 import type { FoodItem, SharedCart } from '@/types/frontend/Index'
 import { cartStore } from '@/routes'
+import { Money } from '@/Utils/Money'
 
 
 interface PageProps {
@@ -139,7 +140,7 @@ export default function FoodItemDetailPage() {
                         className="text-2xl sm:text-3xl font-bold text-[#00a37a] dark:text-[#6bffb8] whitespace-nowrap"
                         style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                       >
-                        {formatMoney(fooditem.price)}
+                        {Money(fooditem.price)}
                       </span>
                     </div>
 

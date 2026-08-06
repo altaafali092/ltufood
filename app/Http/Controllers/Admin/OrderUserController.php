@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enum\OrderStatusEnum;
+use App\Events\OrderStatusUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -21,10 +22,10 @@ class OrderUserController extends Controller
 
         // Summary stats calculated directly in database
         $stats = [
-            'totalOrders'     => Order::count(),
-            'pendingOrders'   => Order::where('status', OrderStatusEnum::Preparing->value)->count(),
+            'totalOrders' => Order::count(),
+            'pendingOrders' => Order::where('status', OrderStatusEnum::Preparing->value)->count(),
             'completedOrders' => Order::where('status', OrderStatusEnum::Served->value)->count(),
-            'totalRevenue'    => Order::where('payment_status', 'paid')->sum('total'),
+            'totalRevenue' => Order::where('payment_status', 'paid')->sum('total'),
         ];
 
         // Filtered orders query
@@ -44,13 +45,13 @@ class OrderUserController extends Controller
             ->get();
 
         return Inertia::render('Admin/Order/Index', [
-            'orderUsers'    => $orderUsers,
+            'orderUsers' => $orderUsers,
             'orderStatuses' => OrderStatusEnum::labels(), // Returns key-value pair of statuses
-            'filters'       => [
+            'filters' => [
                 'search' => $search ?? '',
                 'status' => $status ?? 'all',
             ],
-            'stats'         => $stats,
+            'stats' => $stats,
         ]);
     }
 
@@ -102,7 +103,6 @@ class OrderUserController extends Controller
         //
     }
 
-
     public function status(Request $request, Order $orderUser)
     {
         $validated = $request->validate([
@@ -112,7 +112,12 @@ class OrderUserController extends Controller
         $orderUser->update([
             'status' => $validated['status'],
         ]);
+
+        // Broadcast to everyone listening on "orders.{id}"
+        broadcast(new OrderStatusUpdated($orderUser));
+
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Order status updated successfully.')]);
+
         return back();
     }
 }

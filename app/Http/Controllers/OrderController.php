@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\OrderStatusEnum;
+use App\Events\OrderStatusUpdated;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -11,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,7 +65,7 @@ class OrderController extends Controller
                 'table_id' => $validated['table_id'] ?? null,
                 'customer_id' => Auth::id(),
                 'order_type' => $validated['order_type'] ?? 'dine_in',
-                'status' => 'pending',
+                'status' => OrderStatusEnum::Pending->value,
                 'payment_method' => $validated['payment_method'] ?? 'cash_at_reception',
                 'payment_status' => 'unpaid',
                 'subtotal' => $subtotal,
@@ -109,14 +112,13 @@ class OrderController extends Controller
 
     public function track(Order $order)
     {
-        // Eager load relationships needed for the track page
         $order->load(['items.foodItem', 'table']);
 
         return Inertia::render('Frontend/Order/TrackOrder', [
             'order' => $order,
+            'statuses' => OrderStatusEnum::cases(),
         ]);
     }
-
 
     /**
      * Admin: List all orders
@@ -133,53 +135,29 @@ class OrderController extends Controller
             'orders' => $orders,
         ]);
     }
-    /**
-     * Admin: Assign order to chef
-     */
-    // public function assign(Request $request, Order $order)
-    // {
-    //     $validated = $request->validate([
-    //         'chef_id' => 'required|exists:users,id'
-    //     ]);
-
-    //     OrderAssignment::create([
-    //         'order_id'    => $order->id,
-    //         'chef_id'     => $validated['chef_id'],
-    //         'assigned_by' => Auth::id(),
-    //         'assigned_at' => now(),
-    //     ]);
-
-    //     $order->update(['status' => 'assigned']);
-
-    //     // broadcast(new \App\Events\OrderStatusUpdated($order))->toOthers();
-
-    //     return back()->with('success', 'Order assigned to chef.');
-    // }
-
-
 
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:preparing,ready,served,paid,cancelled',
+            'status' => ['required', Rule::enum(OrderStatusEnum::class)],
         ]);
 
         $order->update(['status' => $validated['status']]);
 
-        if ($validated['status'] === 'paid') {
+        if ($validated['status'] === OrderStatusEnum::Served->value) {
             $order->update(['checked_out_at' => now()]);
             $order->table?->update(['is_occupied' => false]);
         }
 
-        // broadcast(new \App\Events\OrderStatusUpdated($order))->toOthers();
+        broadcast(new OrderStatusUpdated($order));
 
-        return back()->with('success', 'Status updated.');
+        return back()->with('success', __('Status updated.'));
     }
 
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
+            $orderNumber = 'ORD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
         } while (Order::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;

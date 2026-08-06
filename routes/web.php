@@ -18,11 +18,7 @@ Route::controller(CartController::class)->group(function () {
     Route::delete('/cart/{foodItem}', 'destroy')->name('cartDestroy');
 });
 
-
-
 Route::post('/orders', [OrderController::class, 'store'])->name('ordersStore');
-
-
 
 Route::get('/orders', [OrderController::class, 'index'])->name('orderIndex');
 Route::post('/orders/{order}/assign', [OrderController::class, 'assign'])->name('orderAssign');
@@ -37,7 +33,6 @@ Route::post('/userLogout', [UserAuthController::class, 'userLogout'])->name('use
 Route::middleware('auth')->group(function () {
     Route::get('/order/track/{order}', [OrderController::class, 'track'])->name('orderTrack');
 
-
     Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('orderPayment');
     Route::post('/orders/{order}/payment', [PaymentController::class, 'process'])->name('orderPaymentProcess');
     Route::get('/orders/{order}/receipt', [PaymentController::class, 'receipt'])->name('ordersReceipt');
@@ -48,4 +43,4 @@ Route::middleware('auth')->group(function () {
     Route::get('/esewa/failure', [EsewaController::class, 'failure'])->name('esewa.failure');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

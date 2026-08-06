@@ -1,4 +1,5 @@
 import type { Auth } from '@/types/auth';
+import Echo from 'laravel-echo';
 
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
@@ -11,3 +12,13 @@ declare module '@inertiajs/core' {
         };
     }
 }
+
+
+declare global {
+  interface Window {
+    Pusher: any;
+    Echo: Echo<any>;
+  }
+}
+
+export {};
