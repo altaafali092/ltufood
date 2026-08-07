@@ -12,7 +12,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified','prevent-user'])->group(function () {
     Route::get('dashboard', [DashbaordController::class, 'dashboard'])->name('dashboard');
     Route::resource('food-categories', FoodCategoryController::class);
     Route::resource('food-items', FoodItemController::class);
