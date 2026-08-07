@@ -22,27 +22,27 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // 1. Register CartService Singleton
-        $this->app->singleton(CartService::class, function (): CartService {
-            return new CartService;
-        });
-
-        // 2. Custom Fortify Login Response (Superadmin Protection & Custom Redirect)
         $this->app->singleton(LoginResponseContract::class, function () {
             return new class implements LoginResponseContract
             {
+
                 public function toResponse($request): Response
                 {
                     $user = Auth::user();
-                    if ($user && $user->role === 'superadmin') {
-                        Auth::guard('web')->logout();
+
+                    if (! $user->hasRole('Super Admin')) {
+
+                        Auth::logout();
+
                         $request->session()->invalidate();
                         $request->session()->regenerateToken();
 
-                        return Inertia::location(route('admin.dashboard'));
+                        return Inertia::location(route('login'));
+                        // or return redirect()->route('loginPage')
+                        //     ->withErrors(['email' => 'You are not authorized to access the admin panel.']);
                     }
 
-                    return redirect()->intended(route('home'));
+                    return redirect()->route('admin.dashboard');
                 }
             };
         });
@@ -69,13 +69,13 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(
-            fn (): ?Password => app()->isProduction()
+            fn(): ?Password => app()->isProduction()
                 ? Password::min(12)
-                    ->mixedCase()
-                    ->letters()
-                    ->numbers()
-                    ->symbols()
-                    ->uncompromised()
+                ->mixedCase()
+                ->letters()
+                ->numbers()
+                ->symbols()
+                ->uncompromised()
                 : null,
         );
     }
@@ -84,12 +84,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(Login::class, function (Login $event) {
             $user = $event->user;
-
             // Skip cart transfer if user is superadmin
             if ($user->role === 'Super Admin') {
                 return;
             }
-
             // Move cookie items to database exactly once
             app(CartService::class)->moveCartItemsToDatabase($user->id);
         });

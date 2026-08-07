@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/esewa/initiate/{order}', [EsewaController::class, 'initiate'])->name('esewa.initiate');
     Route::get('/esewa/success', [EsewaController::class, 'success'])->name('esewa.success');
     Route::get('/esewa/failure', [EsewaController::class, 'failure'])->name('esewa.failure');
+    Route::get('paymentdone',[EsewaController::class,'donePage'])->name('donePage');
 });
 
 require __DIR__.'/settings.php';

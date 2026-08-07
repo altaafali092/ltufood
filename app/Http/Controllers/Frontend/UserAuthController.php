@@ -33,20 +33,33 @@ class UserAuthController extends Controller
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
-
+    
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
         }
-
+    
+        $user = Auth::user();
+    
+        if ($user->hasRole('Super Admin')) {
+            Auth::logout();
+    
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+    
+            throw ValidationException::withMessages([
+                'email' => 'Super Admin cannot log in from the user portal.',
+            ]);
+        }
+    
         $request->session()->regenerate();
-
+    
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('User login😊  Successfully.')
+            'message' => __('User login 😊 Successfully.'),
         ]);
-        
+    
         return redirect()->intended(route('home'));
     }
 

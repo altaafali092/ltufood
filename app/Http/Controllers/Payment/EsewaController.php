@@ -11,78 +11,81 @@ use Inertia\Inertia;
 
 class EsewaController extends Controller
 {
-public function __construct(protected EsewaService $esewaService) {}
+    public function __construct(protected EsewaService $esewaService) {}
 
-/**
- * Initiate Payment Redirect / Send Form Payload
- */
-public function initiate(Order $order)
-{
-    // Ensure unique transaction ID per payment attempt
-    if (! $order->transaction_uuid) {
-        $order->update([
-            'transaction_uuid' => 'ORD-'.$order->id.'-'.Str::random(6),
-            'payment_method' => 'esewa',
+    /**
+     * Initiate Payment Redirect / Send Form Payload
+     */
+    public function initiate(Order $order)
+    {
+        // Ensure unique transaction ID per payment attempt
+        if (! $order->transaction_uuid) {
+            $order->update([
+                'transaction_uuid' => 'ORD-' . $order->id . '-' . Str::random(6),
+                'payment_method' => 'esewa',
+            ]);
+        }
+
+        $params = $this->esewaService->getPaymentParameters($order);
+
+        return Inertia::render('Frontend/Order/EsewaRedirect', [
+            'params' => $params,
         ]);
     }
 
-    $params = $this->esewaService->getPaymentParameters($order);
+    /**
+     * Handle eSewa Success Redirect
+     */
+    public function success(Request $request)
+    {
+        $encodedData = $request->query('data');
 
-    return Inertia::render('Frontend/Order/EsewaRedirect', [
-        'params' => $params,
-    ]);
+        if (!$encodedData) {
+            return redirect()->route('home')->with('error', 'Invalid eSewa response.');
+        }
 
-    
-}
+        // 1. Decode Base64 string from eSewa
+        $decodedJson = base64_decode($encodedData);
+        $response = json_decode($decodedJson, true);
 
-/**
- * Handle eSewa Success Redirect
- */
-public function success(Request $request)
-{
-    $encodedData = $request->query('data');
+        if (!$response || !isset($response['transaction_uuid'])) {
+            return redirect()->route('home')->with('error', 'Failed to read transaction payload.');
+        }
 
-    if (!$encodedData) {
-        return redirect()->route('home')->with('error', 'Invalid eSewa response.');
+        // 2. Locate order by transaction_uuid
+        $order = Order::where('transaction_uuid', $response['transaction_uuid'])->first();
+
+        if (!$order) {
+            return redirect()->route('home')->with('error', 'Order not found.');
+        }
+
+        // 3. Check status from eSewa payload
+        if (($response['status'] ?? '') === 'COMPLETE') {
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => 'processing',
+                'esewa_transaction_id' => $response['transaction_code'] ?? null,
+                'paid_at' => now(),
+            ]);
+
+            return redirect()->route('donePage', $order->id)
+                ->with('message', 'Payment successfully processed via eSewa!');
+        }
+
+        return redirect()->route('orders.payment', $order->id)
+            ->with('error', 'Payment verification was not completed.');
     }
 
-    // 1. Decode Base64 string from eSewa
-    $decodedJson = base64_decode($encodedData);
-    $response = json_decode($decodedJson, true);
-
-    if (!$response || !isset($response['transaction_uuid'])) {
-        return redirect()->route('home')->with('error', 'Failed to read transaction payload.');
+    /**
+     * Handle eSewa Failure Redirect
+     */
+    public function failure()
+    {
+        return redirect()->route('home')->with('error', 'Payment was cancelled or failed.');
     }
 
-    // 2. Locate order by transaction_uuid
-    $order = Order::where('transaction_uuid', $response['transaction_uuid'])->first();
-
-    if (!$order) {
-        return redirect()->route('home')->with('error', 'Order not found.');
+    public function donePage()
+    {
+        return Inertia::render('Frontend/Order/DonePage');
     }
-
-    // 3. Check status from eSewa payload
-    if (($response['status'] ?? '') === 'COMPLETE') {
-        $order->update([
-            'payment_status' => 'paid',
-            'status' => 'processing',
-            'esewa_transaction_id' => $response['transaction_code'] ?? null,
-            'paid_at' => now(),
-        ]);
-
-        return redirect()->route('orders.receipt', $order->id)
-            ->with('message', 'Payment successfully processed via eSewa!');
-    }
-
-    return redirect()->route('orders.payment', $order->id)
-        ->with('error', 'Payment verification was not completed.');
-}
-
-/**
- * Handle eSewa Failure Redirect
- */
-public function failure()
-{
-    return redirect()->route('home')->with('error', 'Payment was cancelled or failed.');
-}
 }
