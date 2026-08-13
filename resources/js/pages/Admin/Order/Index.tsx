@@ -89,8 +89,8 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                     <button
                         onClick={() => setSelectedStatus('all')}
                         className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors whitespace-nowrap ${selectedStatus === 'all'
-                                ? 'bg-emerald-600 text-white shadow-sm'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                             }`}
                     >
                         All
@@ -100,8 +100,8 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                             key={value}
                             onClick={() => setSelectedStatus(value)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${selectedStatus === value
-                                    ? 'bg-emerald-600 text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             {label}
@@ -152,7 +152,7 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                                             </div>
                                             {order.table && (
                                                 <div className="text-xs text-emerald-600 font-medium">
-                                                    Table: {order.table.name}
+                                                    Table: {order.table?.name}
                                                 </div>
                                             )}
                                         </td>
@@ -342,7 +342,7 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                     </div>
 
                 </div>
-                
+
             )}
         </div>
     );

@@ -21,6 +21,7 @@ export interface OrderItem {
     quantity: number;
     price_at_time: number;
     food_item?: FoodItem;
+    total_price: number;
 }
 
 export interface OrderUser {
@@ -29,7 +30,8 @@ export interface OrderUser {
     order_type: 'dine_in' | 'takeaway' | 'delivery';
     status: 'pending' | 'processing' | 'completed' | 'cancelled';
     payment_method: 'esewa' | 'cash_at_reception' | 'card' | 'khalti' | null;
-    payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded';
+    payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded'
+    ;
     subtotal: number;
     discount_amount: number;
     tax_amount: number;

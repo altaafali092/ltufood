@@ -53,9 +53,9 @@ class TableController extends Controller
         $table = Table::create([
             'table_number' => $validated['table_number'],
             'qr_uuid' => Str::uuid(),
-            'lat' => $validated['lat'] ?? 28.0500,   // Default Nepalgunj approx
+            'lat' => $validated['lat'] ?? 28.0500,  
             'lng' => $validated['lng'] ?? 81.6167,
-            'radius_meters' => $validated['radius_meters'] ?? 50,
+            'radius_meters' => $validated['radius_meters'] ?? 10,
         ]);
 
         $qrPath = "qr-codes/{$table->qr_uuid}.svg";

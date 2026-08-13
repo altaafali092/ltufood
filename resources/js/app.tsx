@@ -6,7 +6,6 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { configureEcho } from '@laravel/echo-react';
-import './Utils/echo';
 
 configureEcho({
     broadcaster: 'reverb',

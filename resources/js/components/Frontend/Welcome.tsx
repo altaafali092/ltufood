@@ -4,7 +4,7 @@ import Header from "./Header";
 import { FoodItem } from "@/types/frontend/Index";
 import FilterBar from "./FilterBar";
 import MenuGrid from "./MenuGrid";
-import { Link, router } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import { cartStore, cartUpdate, foodItemDetail, ordersStore } from "@/routes";
 import FloatingCartBar from "./FloatingCartBar";
 import CartDrawer, { CartState } from "./CartDrawer";
@@ -12,7 +12,6 @@ import { CartItem } from "@/types";
 import { Money } from "@/Utils/Money";
 
 
-  
 const itemImage = (item: FoodItem): string | null =>
   Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
 
@@ -37,6 +36,10 @@ export default function Welcome({
   totalPrice,
   cartItems,
 }: WelcomeProps) {
+  const pageProps = usePage<{
+    activeTable?: { id: number; table_number: string } | null;
+  }>().props;
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [cartOpen, setCartOpen] = useState(false);
@@ -131,7 +134,9 @@ export default function Welcome({
 
     router.post(
       ordersStore().url,
-      {},
+      {
+        table_id: pageProps.activeTable?.id ?? null,
+      },
       {
         preserveScroll: true,
         onSuccess: () => {

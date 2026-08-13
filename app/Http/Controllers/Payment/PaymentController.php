@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-
 class PaymentController extends Controller
 {
     public function show(Order $order)
@@ -26,7 +25,6 @@ class PaymentController extends Controller
             'order' => $order->load(['items.foodItem', 'table']),
         ]);
     }
-
 
     /**
      * Process payment selection
@@ -46,7 +44,8 @@ class PaymentController extends Controller
                 'payment_method' => 'cash',
             ]);
 
-            return redirect()->route('orders.receipt', $order->id)
+            return redirect()
+                ->route('orders.receipt', $order->id)
                 ->with('message', 'Please proceed to the reception counter to pay your bill.');
         }
 
@@ -55,8 +54,6 @@ class PaymentController extends Controller
             return redirect()->route('esewa.initiate', $order->id);
         }
     }
-
-
 
     public function receipt(Order $order): Response
     {
@@ -68,9 +65,6 @@ class PaymentController extends Controller
             'order' => $order->load(['items.foodItem', 'table']),
         ]);
     }
-
-
-
 
     // private function initiateEsewaPayment(Order $order)
     // {

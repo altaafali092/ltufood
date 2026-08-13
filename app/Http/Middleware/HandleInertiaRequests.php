@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use SebastianBergmann\CodeCoverage\Report\Xml\Totals;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -42,7 +41,6 @@ class HandleInertiaRequests extends Middleware
         $totalPrice = $cartService->getTotalPrice();
         $cartItems = $cartService->getCartItems();
 
-
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -56,10 +54,10 @@ class HandleInertiaRequests extends Middleware
                     'updated_at' => $request->user()->updated_at,
                     'can' => $request->user()
                         ? $request->user()
-                        ->getAllPermissions()
-                        ->pluck('name')
-                        ->mapWithKeys(fn($permission) => [$permission => true])
-                        ->all()
+                            ->getAllPermissions()
+                            ->pluck('name')
+                            ->mapWithKeys(fn ($permission) => [$permission => true])
+                            ->all()
                         : [],
                 ] : null,
             ],
@@ -69,6 +67,10 @@ class HandleInertiaRequests extends Middleware
             'totalQuantity' => $totalQuantity,
             'cartItems' => $cartItems,
             'subtotal' => $cartService->subtotal(),
+            'activeTable' => session('table_id') ? [
+                'id' => session('table_id'),
+                'table_number' => session('table_number'),
+            ] : null,
 
         ];
     }

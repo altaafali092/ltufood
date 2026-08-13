@@ -7,6 +7,7 @@ use App\Events\OrderStatusUpdated;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Table;
 use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,12 +60,14 @@ class OrderController extends Controller
             ]);
         }
 
-        $order = DB::transaction(function () use ($cartItems, $cartService, $foodItems, $subtotal, $validated): Order {
+        $tableId = $validated['table_id'] ?? session('table_id');
+
+        $order = DB::transaction(function () use ($cartItems, $cartService, $foodItems, $subtotal, $tableId, $validated): Order {
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),
-                'table_id' => $validated['table_id'] ?? null,
+                'table_id' => $tableId,
                 'customer_id' => Auth::id(),
-                'order_type' => $validated['order_type'] ?? 'dine_in',
+                'order_type' => $validated['order_type'] ?? ($tableId ? 'dine_in' : 'dine_in'),
                 'status' => OrderStatusEnum::Pending->value,
                 'payment_method' => $validated['payment_method'] ?? 'cash_at_reception',
                 'payment_status' => 'unpaid',
@@ -77,6 +80,10 @@ class OrderController extends Controller
                 'customer_lng' => $validated['customer_lng'] ?? null,
                 'notes' => $validated['notes'] ?? null,
             ]);
+
+            if ($tableId) {
+                Table::where('id', $tableId)->update(['is_occupied' => true]);
+            }
 
             foreach ($cartItems as $cartItem) {
                 $foodItem = $foodItems->get($cartItem['food_item_id']);
@@ -162,8 +169,4 @@ class OrderController extends Controller
 
         return $orderNumber;
     }
-
-
-
-    
 }

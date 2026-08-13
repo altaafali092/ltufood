@@ -22,6 +22,10 @@ interface PageProps {
     auth?: {
         user?: User | null;
     };
+    activeTable?: {
+        id: number;
+        table_number: string;
+    } | null;
     [key: string]: unknown;
     totalQuantity?:number
 }
@@ -33,7 +37,7 @@ const Header = ({
     setCartOpen,
 }: HeaderProps) => {
 
-    const { auth,totalPrice,totalQuantity } = usePage<PageProps>().props;
+    const { auth, totalPrice, totalQuantity, activeTable } = usePage<PageProps>().props;
     const user = auth?.user;
 
 
@@ -58,6 +62,13 @@ const Header = ({
                             Scan · Choose · Order
                         </p>
                     </div>
+
+                    {activeTable && (
+                        <div className="ml-2 inline-flex items-center gap-1.5 bg-[#6bffb8]/15 border border-[#6bffb8]/30 text-[#00a37a] dark:text-[#6bffb8] px-3 py-1 rounded-full text-xs font-bold">
+                            <span>📍</span>
+                            <span>Table {activeTable.table_number}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-4">

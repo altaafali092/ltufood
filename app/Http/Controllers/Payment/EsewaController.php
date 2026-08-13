@@ -11,7 +11,9 @@ use Inertia\Inertia;
 
 class EsewaController extends Controller
 {
-    public function __construct(protected EsewaService $esewaService) {}
+    public function __construct(
+        protected EsewaService $esewaService
+    ) {}
 
     /**
      * Initiate Payment Redirect / Send Form Payload
@@ -19,7 +21,7 @@ class EsewaController extends Controller
     public function initiate(Order $order)
     {
         // Ensure unique transaction ID per payment attempt
-        if (! $order->transaction_uuid) {
+        if (!$order->transaction_uuid) {
             $order->update([
                 'transaction_uuid' => 'ORD-' . $order->id . '-' . Str::random(6),
                 'payment_method' => 'esewa',
@@ -68,11 +70,11 @@ class EsewaController extends Controller
                 'paid_at' => now(),
             ]);
 
-            return redirect()->route('donePage', $order->id)
+            return to_route('orderReceipt', $order->id)
                 ->with('message', 'Payment successfully processed via eSewa!');
         }
 
-        return redirect()->route('orders.payment', $order->id)
+        return to_route('orderReceipt', $order->id)
             ->with('error', 'Payment verification was not completed.');
     }
 
@@ -82,10 +84,5 @@ class EsewaController extends Controller
     public function failure()
     {
         return redirect()->route('home')->with('error', 'Payment was cancelled or failed.');
-    }
-
-    public function donePage()
-    {
-        return Inertia::render('Frontend/Order/DonePage');
     }
 }
