@@ -17,3 +17,6 @@ Broadcast::channel('orders.{orderId}', function (User $user, int $orderId) {
 
     return $user->id === $order->customer_id;
 });
+Broadcast::channel('restaurant-alerts', function (User $user) {
+    return ! $user->hasRole('User');
+});

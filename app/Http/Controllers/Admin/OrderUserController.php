@@ -112,7 +112,6 @@ class OrderUserController extends Controller
         $orderUser->update([
             'status' => $validated['status'],
         ]);
-
         // Broadcast to everyone listening on "orders.{id}"
         broadcast(new OrderStatusUpdated($orderUser));
 

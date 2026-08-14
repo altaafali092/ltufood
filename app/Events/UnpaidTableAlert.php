@@ -6,26 +6,29 @@ use App\Models\Order;
 use App\Models\Table;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UnpaidTableAlert implements ShouldBroadcast
+class UnpaidTableAlert implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
-    public $tableNumber;
-    public $orderId;
+    public string $tableNumber;
 
-    public function __construct(Table $table,Order $order)
+    public int $orderId;
+
+    public string $message;
+
+    public string $timestamp;
+
+    public function __construct(Table $table, Order $order)
     {
-        $this->tableNumber = $table->table_number;
-        $this->orderId = $order->id;
+        $this->tableNumber = (string) ($table->table_number ?? $table->name ?? 'Unknown');
+        $this->orderId = (int) $order->id;
+        $this->message = "Alert: Table {$this->tableNumber} left the area without paying their bill!";
+        $this->timestamp = now()->toIso8601String();
     }
 
     /**
@@ -35,17 +38,21 @@ class UnpaidTableAlert implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return [
-            new Channel('restaurant-alerts'),
-        ];
+        return [new PrivateChannel('restaurant-alerts')];
     }
-    
+
+    public function broadcastAs(): string
+    {
+        return 'UnpaidTableAlert';
+    }
+
     public function broadcastWith(): array
     {
         return [
-            'message' => "Alert: Table {$this->tableNumber} left the area without paying their bill!",
+            'message' => $this->message,
             'order_id' => $this->orderId,
             'table_number' => $this->tableNumber,
+            'timestamp' => $this->timestamp,
         ];
     }
 }

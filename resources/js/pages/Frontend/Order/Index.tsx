@@ -45,11 +45,10 @@ const StatusBadge: React.FC<{ status: Order['status'] }> = ({ status }) => {
 const PaymentStatusBadge: React.FC<{ status: Order['payment_status'] }> = ({ status }) => {
     const isPaid = status === 'paid';
     return (
-        <span className={`px-2 py-0.5 text-[11px] font-medium rounded-md border capitalize ${
-            isPaid
-                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50'
-                : 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50'
-        }`}>
+        <span className={`px-2 py-0.5 text-[11px] font-medium rounded-md border capitalize ${isPaid
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50'
+            : 'bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50'
+            }`}>
             {status}
         </span>
     );
@@ -198,14 +197,12 @@ const OrderCard: React.FC<{
     );
 };
 
-// ==========================================
-// Main Page Component
-// ==========================================
 
 export default function Index({ orders, totalQuantity }: OrderIndexProps) {
+
     const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
     const [, setCartOpen] = useState(false);
-
+    const [audioTrack] = useState(() => new Audio('/audio/alert.mp3'));
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const isDark = resolvedAppearance === 'dark';
     const toggleTheme = () => updateAppearance(isDark ? 'light' : 'dark');
@@ -216,15 +213,44 @@ export default function Index({ orders, totalQuantity }: OrderIndexProps) {
         setExpandedOrderId((prev) => (prev === id ? null : id));
     };
 
+    useEffect(() => {
+        const unlockAudio = () => {
+            // Mute, slightly load/play, then immediately pause to "un-gate" the file in browser memory
+            audioTrack.muted = true;
+            audioTrack.play()
+                .then(() => {
+                    audioTrack.pause();
+                    audioTrack.muted = false; // Restore normal volume status
+                    console.log("🔊 Browser audio context successfully unlocked for background geofencing!");
+
+                    // Remove the event listeners immediately so we don't track clicks anymore
+                    document.removeEventListener('click', unlockAudio);
+                    document.removeEventListener('touchstart', unlockAudio);
+                })
+                .catch(err => console.log("Audio unlock attempt failed:", err));
+        };
+
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio); // Essential for iOS/Android touch environments
+
+        return () => {
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+        };
+    }, [audioTrack]);
+
     // --- GEOFENCING CORE HOOK ---
     useEffect(() => {
-        // Find if there is an active, unpaid dine-in order that contains table parameters
         const activeUnpaidOrder = orders.find(
-            (o) => o.payment_status === 'unpaid' && o.status !== 'cancelled' && o.table?.qr_uuid
+            (o) => o.payment_status?.toLowerCase() === 'unpaid' &&
+                o.status?.toLowerCase() !== 'cancelled' &&
+                o.table?.qr_uuid
         );
 
-        // If there's no dynamic table tracking needed, do not engage GPS
-        if (!activeUnpaidOrder || !activeUnpaidOrder.table?.qr_uuid) return;
+        if (!activeUnpaidOrder || !activeUnpaidOrder.table?.qr_uuid) {
+            console.log("Geofence: No active unpaid dine-in order found.");
+            return;
+        }
 
         if (!('geolocation' in navigator)) {
             console.warn('Geolocation is not supported by this browser.');
@@ -232,27 +258,35 @@ export default function Index({ orders, totalQuantity }: OrderIndexProps) {
         }
 
         const targetTableUuid = activeUnpaidOrder.table.qr_uuid;
+        console.log(`Geofence: Started tracking for Table UUID: ${targetTableUuid}`);
 
-        // Monitor continuous hardware coordinates
         const watchId = navigator.geolocation.watchPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
+                console.log(`Geofence: Sending Coordinates -> Lat: ${latitude}, Lng: ${longitude}`);
 
                 axios.post(`/api/geofence/verify/${targetTableUuid}`, {
                     lat: latitude,
                     lng: longitude,
-                }, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
                 })
-                .catch((error) => {
-                    // Triggers the 403 Forbidden alert window built in the controller logic
-                    if (error.response && error.response.status === 403) {
-                        alert(error.response.data.message);
-                    }
-                });
+                    .then(response => {
+                        console.log("🟢 Geofence Server Response:", response.data);
+
+                        if (response.data.status === 'outside_boundary') {
+                            console.warn(`🚨 Boundary breached! User is outside Table boundary.`);
+
+                            // 3. Play the pre-unlocked track instead of instantiating a new one
+                            audioTrack.currentTime = 0; // Rewind track to start
+                            audioTrack.play().catch(err => {
+                                console.error("Fallback: Background audio play was still suppressed.", err.message);
+                            });
+
+                            alert("You have not paid! Please return to your table or settle your bill.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Geofence Real System Error:", error.message);
+                    });
             },
             (error) => {
                 console.error(`Geofence location error: ${error.message}`);
@@ -264,11 +298,11 @@ export default function Index({ orders, totalQuantity }: OrderIndexProps) {
             }
         );
 
-        // Cleanup tracking instance automatically if component handles routing or unmounts
         return () => {
+            console.log("Geofence: Stopping location watch tracker.");
             navigator.geolocation.clearWatch(watchId);
         };
-    }, [orders]);
+    }, [orders, audioTrack]);
 
     return (
         <>

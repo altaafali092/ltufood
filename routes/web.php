@@ -1,12 +1,11 @@
 <?php
 
+use App\Http\Controllers\FrontController;
 use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\UserAuthController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Payment\EsewaController;
 use App\Http\Controllers\Payment\PaymentController;
-use App\Http\Controllers\FrontController;
-use App\Http\Controllers\GeofenceController;
-use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [FrontController::class, 'index'])->name('home');
@@ -43,7 +42,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/esewa/initiate/{order}', [EsewaController::class, 'initiate'])->name('esewa.initiate');
     Route::get('/esewa/success', [EsewaController::class, 'success'])->name('esewa.success');
     Route::get('/esewa/failure', [EsewaController::class, 'failure'])->name('esewa.failure');
-   
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';
