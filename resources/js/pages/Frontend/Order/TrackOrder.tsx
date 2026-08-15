@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEcho } from '@laravel/echo-react';
+import { receipt } from '@/routes/orders';
 
 interface OrderItem {
   id: number;
@@ -90,7 +91,7 @@ export default function OrderTrack({ order: initialOrder }: { order: Order }) {
           >
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to My Orders
           </Link>
-          <Link href={`/receipt/${order.id}`}>
+          <Link href={receipt(order.order_number)}>
             <Button variant="outline" size="sm" className="text-xs rounded-xl shadow-xs hover:bg-white dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800 flex items-center gap-1.5">
               <Receipt className="w-3.5 h-3.5 text-slate-500" /> Receipt
             </Button>
@@ -137,11 +138,11 @@ export default function OrderTrack({ order: initialOrder }: { order: Order }) {
             <div className="space-y-6">
               <div className="relative">
                 {/* Background Connecting Line */}
-                <div className="absolute top-[18px] left-[20px] right-[20px] h-1 bg-slate-100 dark:bg-slate-800 z-0 rounded-full" />
+                <div className="absolute top-4.5 left-5 right-5 h-1 bg-slate-100 dark:bg-slate-800 z-0 rounded-full" />
                 
                 {/* Animated Dynamic Progress Line */}
                 <div 
-                  className="absolute top-[18px] left-[20px] h-1 bg-emerald-500 z-0 rounded-full transition-all duration-700 ease-out" 
+                  className="absolute top-4.5 left-5 h-1 bg-emerald-500 z-0 rounded-full transition-all duration-700 ease-out" 
                   style={{ width: `calc(${progressPercent}% - 40px * (${progressPercent / 100}))` }}
                 />
 
