@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\GeofenceAlert;
 use App\Models\Order;
 use App\Models\Table;
 use Illuminate\Broadcasting\Channel;
@@ -14,6 +15,8 @@ use Illuminate\Queue\SerializesModels;
 class UnpaidTableAlert implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public int $alertId;
 
     public string $tableNumber;
 
@@ -29,6 +32,14 @@ class UnpaidTableAlert implements ShouldBroadcastNow
         $this->orderId = (int) $order->id;
         $this->message = "Alert: Table {$this->tableNumber} left the area without paying their bill!";
         $this->timestamp = now()->toIso8601String();
+
+        $alert = GeofenceAlert::create([
+            'order_id' => $this->orderId,
+            'table_number' => $this->tableNumber,
+            'message' => $this->message,
+        ]);
+
+        $this->alertId = $alert->id;
     }
 
     /**
@@ -49,6 +60,7 @@ class UnpaidTableAlert implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
+            'alert_id' => $this->alertId,
             'message' => $this->message,
             'order_id' => $this->orderId,
             'table_number' => $this->tableNumber,
