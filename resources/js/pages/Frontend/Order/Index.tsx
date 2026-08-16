@@ -145,7 +145,7 @@ const OrderCard: React.FC<{
 
                         {order.payment_status === 'unpaid' && (
                             <Link
-                                href={orderTrack(order.id)}
+                                href={orderTrack(order.order_number)}
                                 className="inline-flex items-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg transition-colors"
                             >
                                 Track Live

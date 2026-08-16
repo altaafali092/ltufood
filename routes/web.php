@@ -32,7 +32,7 @@ Route::post('/register', [UserAuthController::class, 'registerUser'])->name('reg
 Route::post('/userLogout', [UserAuthController::class, 'userLogout'])->name('userLogout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/order/track/{order}', [OrderController::class, 'track'])->name('orderTrack');
+    Route::get('/order/track/{order:order_number}', [OrderController::class, 'track'])->name('orderTrack');
 
     Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('orderPayment');
     Route::post('/orders/{order}/payment', [PaymentController::class, 'process'])->name('orderPaymentProcess');
