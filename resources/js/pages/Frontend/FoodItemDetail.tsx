@@ -1,31 +1,43 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
-import { useState, useMemo } from 'react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { ChevronLeft, Share2, Heart, Check, Loader2 } from 'lucide-react'
+import { useState, useMemo } from 'react'
 
-import { useAppearance } from '@/hooks/use-appearance'
-import { QuantityControls } from '@/components/Frontend/QuantityControls'
+import type { CartState } from '@/components/Frontend/CartDrawer';
+import CartDrawer from '@/components/Frontend/CartDrawer'
+import FloatingCartBar from '@/components/Frontend/FloatingCartBar'
 import Header from '@/components/Frontend/Header'
-import type { FoodItem, SharedCart } from '@/types/frontend/Index'
-import { cartStore } from '@/routes'
-import { Money } from '@/Utils/Money'
+import { QuantityControls } from '@/components/Frontend/QuantityControls'
+import { useAppearance } from '@/hooks/use-appearance'
+import { cartStore, cartUpdate, ordersStore } from '@/routes'
+import type { CartItem } from '@/types'
+import type { FoodItem } from '@/types/frontend/Index'
+import { Money } from '@/Utils/Money';
+
 
 
 interface PageProps {
   fooditem: FoodItem
-  cart?: SharedCart
+  cartItems: CartItem[]
+  totalQuantity: number
+  totalPrice: number
+  activeTable?: { id: number; table_number: string } | null
+  [key: string]: unknown
 }
 
-const SPICE_LEVELS = ['Mild', 'Medium 🔥', 'Extra Spicy 🔥🔥']
+
 
 export default function FoodItemDetailPage() {
-  const { fooditem, cart } = usePage<PageProps>().props
-  const { isDark, toggleTheme } = useAppearance()
+  const { fooditem, cartItems, totalQuantity, totalPrice, activeTable } = usePage<PageProps>().props
+  const { resolvedAppearance, updateAppearance } = useAppearance()
+  const isDark = resolvedAppearance === 'dark'
+  const toggleTheme = () => updateAppearance(isDark ? 'light' : 'dark')
 
   // Local State
   const [qty, setQty] = useState<number>(1)
-  const [selectedSpice, setSelectedSpice] = useState<string>('Mild')
+  
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false)
-  const [, setCartOpen] = useState<boolean>(false)
+  const [cartOpen, setCartOpen] = useState<boolean>(false)
+  const [ordered, setOrdered] = useState<boolean>(false)
   const [added, setAdded] = useState<boolean>(false)
   const [processing, setProcessing] = useState<boolean>(false)
 
@@ -34,21 +46,99 @@ export default function FoodItemDetailPage() {
   const subCategory = fooditem.sub_category ?? fooditem.subCategory ?? null
   const emoji = fooditem.tags?.[0] || '🍽️'
   const isPopular = (fooditem.popularity_score ?? 0) >= 85
-  const totalPrice = useMemo(() => fooditem.price * qty, [fooditem.price, qty])
+  const lineTotalPrice = useMemo(() => fooditem.price * qty, [fooditem.price, qty])
 
 
-  
-  const form = useForm({
-    quantity: 1,
-    price: fooditem.price,
-  });
-  
+  const requestOptions = {
+    preserveScroll: true,
+    preserveState: true,
+  }
+
+  const cart = useMemo<CartState>(() => {
+    const rawItems = Array.isArray(cartItems) ? cartItems : []
+
+    return rawItems.reduce<CartState>((items, line) => {
+      items[line.food_item_id] = {
+        ...(line.food_item_id === fooditem.id
+          ? fooditem
+          : {
+              id: line.food_item_id,
+              title: line.slug ?? `Item #${line.food_item_id}`,
+              slug: line.slug ?? String(line.food_item_id),
+              description: null,
+              price: line.price,
+              popularity_score: 0,
+              images: line.image ? [line.image] : null,
+              status: true,
+              tags: null,
+              sub_category: null,
+            }),
+        qty: line.quantity ?? 1,
+      }
+
+      return items
+    }, {})
+  }, [cartItems, fooditem])
+
   const handleAddToCart = () => {
-    form.post(cartStore(fooditem.id), {
-      preserveScroll: true,
-      preserveState: true,
-    });
-  };
+    setProcessing(true)
+    setAdded(false)
+
+    router.post(
+      cartStore(fooditem.id).url,
+      { quantity: qty },
+      {
+        ...requestOptions,
+        onSuccess: () => {
+          setAdded(true)
+          setTimeout(() => setAdded(false), 1800)
+        },
+        onFinish: () => setProcessing(false),
+      },
+    )
+  }
+
+  const addToCart = (item: FoodItem) => {
+    router.post(cartStore(item.id).url, { quantity: 1 }, requestOptions)
+  }
+
+  const removeFromCart = (id: number) => {
+    const quantity = cart[id]?.qty ?? 0
+
+    if (quantity > 1) {
+      router.put(cartUpdate(id).url, { quantity: quantity - 1 }, requestOptions)
+
+      return
+    }
+
+    router.delete(`/cart/${id}`, requestOptions)
+  }
+
+  const placeOrder = () => {
+    if (Object.keys(cart).length === 0 || processing) {
+      return
+    }
+
+    setProcessing(true)
+
+    router.post(
+      ordersStore().url,
+      {
+        table_id: activeTable?.id ?? null,
+      },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setOrdered(true)
+          setTimeout(() => {
+            setOrdered(false)
+            setCartOpen(false)
+          }, 3200)
+        },
+        onFinish: () => setProcessing(false),
+      },
+    )
+  }
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -58,7 +148,7 @@ export default function FoodItemDetailPage() {
           text: fooditem.description,
           url: window.location.href,
         })
-      } catch (err) {
+      } catch {
         // Ignored fallback
       }
     } else {
@@ -77,7 +167,7 @@ export default function FoodItemDetailPage() {
           <Header
             isDark={isDark}
             toggleTheme={toggleTheme}
-            totalItems={cart?.count ?? 0}
+            totalItems={totalQuantity ?? 0}
             setCartOpen={setCartOpen}
           />
 
@@ -100,7 +190,7 @@ export default function FoodItemDetailPage() {
                 <div className="relative w-full aspect-[4/3] sm:aspect-square rounded-[20px] overflow-hidden bg-white dark:bg-[#0d1117] shadow-sm border border-black/5 dark:border-white/5">
                   {imageUrl ? (
                     <img
-                      src={imageUrl}
+                      src={imageUrl ?? undefined}
                       alt={fooditem.title}
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
@@ -153,27 +243,8 @@ export default function FoodItemDetailPage() {
 
                     <hr className="border-slate-300/60 dark:border-slate-700/60 mb-6" />
 
-                    {/* Spice Level Customization */}
-                    <div className="mb-6">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
-                        Spice Level
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {SPICE_LEVELS.map((level) => (
-                          <button
-                            key={level}
-                            type="button"
-                            onClick={() => setSelectedSpice(level)}
-                            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${selectedSpice === level
-                                ? 'bg-[#20e0a1] text-slate-950 shadow-sm'
-                                : 'bg-white dark:bg-[#0d1117] text-slate-700 dark:text-slate-300 border border-transparent hover:border-slate-300 dark:hover:border-slate-700'
-                              }`}
-                          >
-                            {level}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                
+                    
 
                     {/* Quantity Control */}
                     <div className="mb-8">
@@ -216,7 +287,7 @@ export default function FoodItemDetailPage() {
                         </>
                       ) : (
                         <span>
-                          + Add {qty} to Cart • {formatMoney(totalPrice)}
+                          + Add {qty} to Cart • {Money(lineTotalPrice)}
                         </span>
                       )}
                     </button>
@@ -272,7 +343,7 @@ export default function FoodItemDetailPage() {
                 />
                 <InfoCard
                   label="Total Summary"
-                  value={`${qty}x • ${formatMoney(totalPrice)}`}
+                  value={`${qty}x • ${Money(lineTotalPrice)}`}
                   accent
                 />
                 <InfoCard
@@ -285,6 +356,28 @@ export default function FoodItemDetailPage() {
           </main>
         </div>
       </div>
+
+      {totalQuantity > 0 && !cartOpen && (
+        <FloatingCartBar
+          totalQuantity={totalQuantity}
+          subtotal={totalPrice}
+          onOpenCart={() => setCartOpen(true)}
+        />
+      )}
+
+      {cartOpen && (
+        <CartDrawer
+          cart={cart}
+          onAdd={addToCart}
+          onRemove={removeFromCart}
+          onClose={() => setCartOpen(false)}
+          onOrder={placeOrder}
+          ordered={ordered}
+          money={Money}
+          itemImage={(item) => item.images?.[0] || null}
+          itemEmoji={(item) => item.tags?.[0] || '🍽️'}
+        />
+      )}
     </>
   )
 }

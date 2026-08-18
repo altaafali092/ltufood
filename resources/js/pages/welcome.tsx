@@ -22,7 +22,7 @@ const WelcomePage = ({ foodItems, canRegister, cartItems }:PageProps) => {
       <Head title="LTU Food" />
       <WelcomeComponent
         foodItems={foodItems}
-        canRegister={canRegister}
+        // canRegister={canRegister}
         cartItems={cartItems}
         totalQuantity={totalQuantity}
         totalPrice={totalPrice}
