@@ -266,55 +266,55 @@ export default function Dashboard({
     return (
         <>
             <Head title="Admin Dashboard" />
-            <div className="min-h-full bg-[#f7f9fc] dark:bg-[#080d18]">
-                <header className="sticky top-0 z-10 border-b border-slate-200/80 bg-[#f7f9fc]/90 backdrop-blur dark:border-slate-800 dark:bg-[#080d18]/90">
-                    <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-                        <div>
+            <div className="w-full bg-[#f7f9fc] dark:bg-[#080d18]">
 
-                            <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl dark:text-white">
-                                Good morning, Admin
-                            </h1>
+                <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+                    <div>
+
+                        <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl dark:text-white">
+                            Good morning, Admin
+                        </h1>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="relative hidden w-56 lg:block">
+                            <Search className="absolute top-2.5 left-3 size-4 text-slate-400" />
+                            <Input
+                                value={search}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
+                                }
+                                placeholder="Search orders..."
+                                className="h-9 rounded-lg border-slate-200 bg-white pl-9 text-xs dark:border-slate-700 dark:bg-slate-900"
+                            />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative hidden w-56 lg:block">
-                                <Search className="absolute top-2.5 left-3 size-4 text-slate-400" />
-                                <Input
-                                    value={search}
-                                    onChange={(event) =>
-                                        setSearch(event.target.value)
-                                    }
-                                    placeholder="Search orders..."
-                                    className="h-9 rounded-lg border-slate-200 bg-white pl-9 text-xs dark:border-slate-700 dark:bg-slate-900"
-                                />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="relative size-9 rounded-lg border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+                            aria-label="Notifications"
+                        >
+                            <Bell className="size-4" />
+                            <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-blue-600 text-[9px] text-white">
+                                4
+                            </span>
+                        </Button>
+                        <div className="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex dark:border-slate-700">
+                            <div className="flex size-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                                AD
                             </div>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                className="relative size-9 rounded-lg border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
-                                aria-label="Notifications"
-                            >
-                                <Bell className="size-4" />
-                                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-blue-600 text-[9px] text-white">
-                                    4
-                                </span>
-                            </Button>
-                            <div className="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex dark:border-slate-700">
-                                <div className="flex size-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-                                    AD
-                                </div>
-                                <div className="hidden text-left lg:block">
-                                    <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                                        Alex Dev
-                                    </p>
-                                    <p className="text-[10px] text-slate-500">
-                                        Administrator
-                                    </p>
-                                </div>
-                                <ChevronDown className="size-3.5 text-slate-400" />
+                            <div className="hidden text-left lg:block">
+                                <p className="text-xs font-semibold text-slate-900 dark:text-white">
+                                    Alex Dev
+                                </p>
+                                <p className="text-[10px] text-slate-500">
+                                    Administrator
+                                </p>
                             </div>
+                            <ChevronDown className="size-3.5 text-slate-400" />
                         </div>
                     </div>
-                </header>
+                </div>
+
 
                 <main className="space-y-6 p-4 sm:p-6 lg:p-8">
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
@@ -650,70 +650,70 @@ export default function Dashboard({
                                                         <div className="flex items-center gap-1">
                                                             {order.status ===
                                                                 'Pending' && (
-                                                                <>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        className="h-7 bg-blue-600 px-2 text-[10px] hover:bg-blue-700"
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            updateOrderStatus(
-                                                                                order.id,
-                                                                                'Preparing',
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Accept
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        className="h-7 px-2 text-[10px] text-red-500"
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            updateOrderStatus(
-                                                                                order.id,
-                                                                                'Cancelled',
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        Reject
-                                                                    </Button>
-                                                                </>
-                                                            )}
+                                                                    <>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            className="h-7 bg-blue-600 px-2 text-[10px] hover:bg-blue-700"
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                updateOrderStatus(
+                                                                                    order.id,
+                                                                                    'Preparing',
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Accept
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="ghost"
+                                                                            className="h-7 px-2 text-[10px] text-red-500"
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                updateOrderStatus(
+                                                                                    order.id,
+                                                                                    'Cancelled',
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            Reject
+                                                                        </Button>
+                                                                    </>
+                                                                )}
                                                             {order.status ===
                                                                 'Preparing' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="h-7 px-2 text-[10px]"
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOrderStatus(
-                                                                            order.id,
-                                                                            'Ready',
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Mark ready
-                                                                </Button>
-                                                            )}
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="h-7 px-2 text-[10px]"
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            updateOrderStatus(
+                                                                                order.id,
+                                                                                'Ready',
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Mark ready
+                                                                    </Button>
+                                                                )}
                                                             {order.status ===
                                                                 'Ready' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="h-7 px-2 text-[10px]"
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        updateOrderStatus(
-                                                                            order.id,
-                                                                            'Served',
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Mark served
-                                                                </Button>
-                                                            )}
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="h-7 px-2 text-[10px]"
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            updateOrderStatus(
+                                                                                order.id,
+                                                                                'Served',
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Mark served
+                                                                    </Button>
+                                                                )}
                                                             <Button
                                                                 size="icon"
                                                                 variant="ghost"
@@ -1047,7 +1047,7 @@ export default function Dashboard({
                         </div>
                     </div>
 
-                  
+
                 </main>
             </div>
         </>
