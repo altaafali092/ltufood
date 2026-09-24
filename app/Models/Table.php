@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\FileTrait;
+use App\Enum\OrderStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,9 +44,27 @@ class Table extends Model
     public function activeOrder(): ?Order
     {
         return $this->orders()
-            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->whereNotIn('status', [
+                OrderStatusEnum::Cancelled->value,
+                OrderStatusEnum::Served->value,
+            ])
             ->latest()
             ->first();
+    }
+
+    public function displayStatus(?Order $activeOrder = null): string
+    {
+        $activeOrder ??= $this->activeOrder();
+
+        if ($activeOrder !== null) {
+            return match ($activeOrder->status) {
+                OrderStatusEnum::Pending->value => 'Order Requested',
+                OrderStatusEnum::Preparing->value => 'Preparing',
+                default => 'Occupied',
+            };
+        }
+
+        return $this->is_occupied ? 'Occupied' : 'Available';
     }
 
     public function scopeAvailable(Builder $query): Builder

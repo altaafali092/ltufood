@@ -273,7 +273,9 @@ export default function Welcome({
               money={Money}
               itemImage={itemImage}
               itemEmoji={itemEmoji}
+      
             />
+          
           </>
         )}
       </main>

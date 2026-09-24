@@ -6,7 +6,7 @@ export interface User {
 
 export interface Table {
     id: number;
-    name: string; // or table_number
+    table_number: string;
 }
 
 export interface FoodItem {
@@ -28,7 +28,7 @@ export interface OrderUser {
     id: number;
     order_number: string;
     order_type: 'dine_in' | 'takeaway' | 'delivery';
-    status: 'pending' | 'processing' | 'completed' | 'cancelled';
+    status: 'Pending' | 'Preparing' | 'Ready' | 'Served' | 'Cancelled';
     payment_method: 'esewa' | 'cash_at_reception' | 'card' | 'khalti' | null;
     payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded'
     ;

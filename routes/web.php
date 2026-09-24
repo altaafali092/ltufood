@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Ai\ChatController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\UserAuthController;
@@ -42,6 +43,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/esewa/initiate/{order}', [EsewaController::class, 'initiate'])->name('esewa.initiate');
     Route::get('/esewa/success', [EsewaController::class, 'success'])->name('esewa.success');
     Route::get('/esewa/failure', [EsewaController::class, 'failure'])->name('esewa.failure');
-});
 
+    Route::get('/chat', [ChatController::class, 'chat'])->name('chat');
+    Route::post('/chat/message', [ChatController::class, 'sendMessage'])->name('chat.message');
+});
 require __DIR__.'/settings.php';

@@ -152,7 +152,7 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                                             </div>
                                             {order.table && (
                                                 <div className="text-xs text-emerald-600 font-medium">
-                                                    Table: {order.table?.name}
+                                                    Table: {order.table?.table_number}
                                                 </div>
                                             )}
                                         </td>
