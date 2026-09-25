@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import {
+    Building2Icon,
     Cable,
     CakeIcon,
     icons,
@@ -9,6 +10,7 @@ import {
     ListOrderedIcon,
     LockKeyhole,
     Table2,
+    TrendingUp,
     User2,
 } from 'lucide-react';
 
@@ -25,7 +27,8 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
-import { dashboard } from '@/routes/admin';
+import { dashboard, officeSettingIndex, officeSettingStore } from '@/routes/admin';
+import salesReport from '@/routes/admin/sales-report';
 import permission from '@/routes/admin/permission';
 import role from '@/routes/admin/role';
 import user from '@/routes/admin/user';
@@ -50,6 +53,12 @@ export function AppSidebar() {
             title: 'Order List',
             href: userOrders.index(),
             icon: ListOrderedIcon,
+            show: true,
+        },
+        {
+            title: 'Sales Report',
+            href: salesReport.index(),
+            icon: TrendingUp,
             show: true,
         },
       
@@ -82,6 +91,12 @@ export function AppSidebar() {
             title: 'Food Item',
             href: foodItems.index(),
             icon: CakeIcon,
+            show: can('view food item'),
+        },
+        {
+            title: 'OfficeSetting',
+            href: officeSettingIndex(),
+            icon: Building2Icon,
             show: can('view food item'),
         },
         {

@@ -5,7 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Enum\OrderStatusEnum;
 use App\Events\OrderStatusUpdated;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreOrderRequest;
+use App\Models\FoodItem;
 use App\Models\Order;
+use App\Models\Table;
+use App\Models\User;
+use App\Services\AdminOrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -52,7 +58,29 @@ class OrderUserController extends Controller
                 'status' => $status ?? 'all',
             ],
             'stats' => $stats,
+            'orderTables' => Table::query()
+                ->orderBy('table_number')
+                ->get(['id', 'table_number']),
+            'orderFoodItems' => FoodItem::query()
+                ->where('status', true)
+                ->orderBy('title')
+                ->get(['id', 'title', 'price']),
+            'orderCustomers' => User::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'phone', 'email']),
         ]);
+    }
+
+    public function storeOfflineOrder(StoreOrderRequest $request, AdminOrderService $service): JsonResponse
+    {
+        $existing = Order::query()->where('client_uuid', $request->validated('client_uuid'))->exists();
+        // Staff may add another manual order to an occupied table.
+        $order = $service->create($request->validated(), allowOccupiedTable: true);
+
+        return response()->json([
+            'order' => $order,
+            'idempotent' => $existing,
+        ], $existing ? 200 : 201);
     }
 
     /**

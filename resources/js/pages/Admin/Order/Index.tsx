@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { OrderUser } from '@/types/admin/Order';
 import { router } from '@inertiajs/react';
 import { orderStatus } from '@/routes/admin';
+import AdminOrderComposer from '@/components/AdminOrderComposer';
 
 interface StatsProps {
     totalOrders: number;
@@ -18,9 +19,12 @@ interface OrderProps {
         status: string;
     };
     stats: StatsProps;
+    orderTables: Array<{ id: number; table_number: string }>;
+    orderFoodItems: Array<{ id: number; title: string; price: number }>;
+    orderCustomers: Array<{ id: number; name: string; phone?: string | null; email: string }>;
 }
 
-export default function Index({ orderUsers, orderStatuses, filters, stats }: OrderProps) {
+export default function Index({ orderUsers, orderStatuses, filters, stats, orderTables, orderFoodItems, orderCustomers }: OrderProps) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedStatus, setSelectedStatus] = useState<string>(filters.status || 'all');
     const [selectedOrder, setSelectedOrder] = useState<OrderUser | null>(null);
@@ -60,6 +64,7 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                     <h1 className="text-2xl font-bold text-gray-900">Orders Dashboard</h1>
                     <p className="text-sm text-gray-500">Manage incoming restaurant orders and payment statuses</p>
                 </div>
+                <AdminOrderComposer tables={orderTables} foodItems={orderFoodItems} customers={orderCustomers} />
             </div>
 
             {/* Stats Cards */}
@@ -128,7 +133,8 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                         <thead className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             <tr>
                                 <th className="py-4 px-6">Order ID</th>
-                                <th className="py-4 px-6">Customer / Table</th>
+                                <th className="py-4 px-6">Customer</th>
+                                <th className="py-4 px-6">Table</th>
                                 <th className="py-4 px-6">Type</th>
                                 <th className="py-4 px-6">Payment</th>
                                 <th className="py-4 px-6">Order Status</th>
@@ -150,11 +156,11 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                                             <div className="font-medium text-gray-900">
                                                 {order.customer?.name || 'Walk-in Guest'}
                                             </div>
-                                            {order.table && (
-                                                <div className="text-xs text-emerald-600 font-medium">
-                                                    Table: {order.table?.table_number}
-                                                </div>
-                                            )}
+                                        </td>
+                                        <td className="py-4 px-6">
+                                            <span className="font-medium text-emerald-600">
+                                                {order.table ? `Table ${order.table.table_number}` : 'No table'}
+                                            </span>
                                         </td>
                                         <td className="py-4 px-6 capitalize">
                                             <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
@@ -203,7 +209,7 @@ export default function Index({ orderUsers, orderStatuses, filters, stats }: Ord
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="text-center py-8 text-gray-400">
+                                    <td colSpan={8} className="text-center py-8 text-gray-400">
                                         No orders found.
                                     </td>
                                 </tr>

@@ -27,6 +27,7 @@ class TableController extends Controller
 
         Gate::authorize('view table', Table::class);
         $tables = Table::latest()->paginate(7);
+
         return Inertia::render('Admin/Table/Index', [
             'tables' => $tables,
         ]);
@@ -39,6 +40,7 @@ class TableController extends Controller
     {
 
         Gate::authorize('create table', Table::class);
+
         return Inertia::render('Admin/Table/Create');
     }
 
@@ -53,7 +55,7 @@ class TableController extends Controller
         $table = Table::create([
             'table_number' => $validated['table_number'],
             'qr_uuid' => Str::uuid(),
-            'lat' => $validated['lat'] ?? 28.0500,  
+            'lat' => $validated['lat'] ?? 28.0500,
             'lng' => $validated['lng'] ?? 81.6167,
             'radius_meters' => $validated['radius_meters'] ?? 10,
         ]);
@@ -82,6 +84,7 @@ class TableController extends Controller
     {
 
         Gate::authorize('view table', Table::class);
+
         return Inertia::render('Admin/Table/Show', [
             'table' => $table->loadCount('orders'),
         ]);
@@ -94,6 +97,7 @@ class TableController extends Controller
     {
 
         Gate::authorize('edit table', Table::class);
+
         return Inertia::render('Admin/Table/Edit', [
             'table' => $table,
         ]);
@@ -123,11 +127,23 @@ class TableController extends Controller
         if ($table->qr_code_image) {
             Storage::disk('public')->delete($table->qr_code_image);
         }
-
         $table->delete();
-
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Table deleted.')]);
 
-        return to_route('admin.tables.index');
+        return back();
+    }
+
+    public function tableUpdate(Table $table)
+    {
+        $table->update([
+            'is_occupied' => ! $table->is_occupied,
+        ]);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Table status updated successfully.'),
+        ]);
+
+        return back();
     }
 }

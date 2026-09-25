@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\FileTrait;
+use App\Enum\OrderStatusEnum;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'order_number',
+    'client_uuid',
     'table_id',
     'customer_id',
     'order_type',
@@ -76,7 +78,10 @@ class Order extends Model
 
     public function isActive(): bool
     {
-        return ! in_array($this->status, ['completed', 'cancelled']);
+        return ! in_array($this->status, [
+            OrderStatusEnum::Cancelled->value,
+            OrderStatusEnum::Served->value,
+        ], true);
     }
 
     /**

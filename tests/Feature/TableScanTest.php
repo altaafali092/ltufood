@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\FoodItem;
+use App\Models\Order;
 use App\Models\Table;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,6 +64,7 @@ test('placing an order automatically uses table_id from session', function () {
         'order_type' => 'dine_in',
         'subtotal' => 30.00,
     ]);
+    $response->assertSessionHas('active_order_id', Order::query()->value('id'));
 
     $table->refresh();
     expect($table->is_occupied)->toBeTrue();

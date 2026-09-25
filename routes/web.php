@@ -21,6 +21,8 @@ Route::controller(CartController::class)->group(function () {
 });
 
 Route::post('/orders', [OrderController::class, 'store'])->name('ordersStore');
+Route::get('/orders/available-tables', [OrderController::class, 'availableTables'])->name('orders.availableTables');
+Route::post('/orders/{order}/switch-table', [OrderController::class, 'switchTable'])->name('orders.switchTable');
 
 Route::get('/orders', [OrderController::class, 'index'])->name('orderIndex');
 Route::post('/orders/{order}/assign', [OrderController::class, 'assign'])->name('orderAssign');

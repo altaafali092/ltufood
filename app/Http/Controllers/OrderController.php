@@ -4,17 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Enum\OrderStatusEnum;
 use App\Events\OrderStatusUpdated;
+use App\Http\Requests\SwitchTableRequest;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Table;
 use App\Services\CartService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -109,12 +112,111 @@ class OrderController extends Controller
             return $order;
         });
 
+        $order->load('table');
+        session([
+            'active_order_id' => $order->id,
+            'table_id' => $order->table_id,
+            'table_number' => $order->table?->table_number,
+        ]);
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Order placed successfully.'),
         ]);
 
         return back()->with('order_id', $order->id);
+    }
+
+    public function availableTables(Request $request): JsonResponse
+    {
+        $order = $this->sessionOrder($request);
+
+        abort_unless($order, 404);
+
+        $availableTables = Table::query()
+            ->available()
+            ->when($order->table_id, fn ($query) => $query->where('id', '!=', $order->table_id))
+            ->whereDoesntHave('orders', function ($query) {
+                $query->whereNotIn('status', [
+                    OrderStatusEnum::Cancelled->value,
+                    OrderStatusEnum::Served->value,
+                ]);
+            })
+            ->orderBy('table_number')
+            ->get(['id', 'table_number']);
+
+        return response()->json([
+            'tables' => $availableTables,
+        ]);
+    }
+
+    public function switchTable(SwitchTableRequest $request, Order $order): RedirectResponse
+    {
+        $newTableId = (int) $request->validated('table_id');
+
+        DB::transaction(function () use ($request, $order, $newTableId): void {
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+            $this->authorizeSessionOrder($request, $order);
+
+            if (! $order->isActive()) {
+                throw ValidationException::withMessages([
+                    'table_id' => __('This order is no longer active.'),
+                ]);
+            }
+
+            $tableIds = collect([$order->table_id, $newTableId])
+                ->filter()
+                ->sort()
+                ->values();
+            $tables = Table::query()
+                ->whereIn('id', $tableIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+            $newTable = $tables->get($newTableId);
+
+            if (! $newTable || $newTable->id === $order->table_id || $newTable->is_occupied) {
+                throw ValidationException::withMessages([
+                    'table_id' => __('The selected table is no longer available.'),
+                ]);
+            }
+
+            $hasActiveOrder = $newTable->orders()
+                ->where('orders.id', '!=', $order->id)
+                ->whereNotIn('status', [
+                    OrderStatusEnum::Cancelled->value,
+                    OrderStatusEnum::Served->value,
+                ])
+                ->exists();
+
+            if ($hasActiveOrder) {
+                throw ValidationException::withMessages([
+                    'table_id' => __('The selected table is no longer available.'),
+                ]);
+            }
+
+            $oldTable = $tables->get($order->table_id);
+            $order->update(['table_id' => $newTable->id]);
+            $newTable->update(['is_occupied' => true]);
+
+            if ($oldTable) {
+                $oldTable->update(['is_occupied' => false]);
+            }
+        });
+
+        session([
+            'table_id' => $newTableId,
+            'table_number' => Table::query()->whereKey($newTableId)->value('table_number'),
+        ]);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('Your order was moved to Table :number.', [
+                'number' => session('table_number'),
+            ]),
+        ]);
+
+        return back();
     }
 
     public function track(Order $order)
@@ -168,5 +270,33 @@ class OrderController extends Controller
         } while (Order::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;
+    }
+
+    private function sessionOrder(Request $request): ?Order
+    {
+        $orderId = $request->session()->get('active_order_id');
+
+        if (! $orderId) {
+            return null;
+        }
+
+        $order = Order::query()->with('table')->find($orderId);
+
+        if (! $order || ! $order->isActive()) {
+            return null;
+        }
+
+        $this->authorizeSessionOrder($request, $order);
+
+        return $order;
+    }
+
+    private function authorizeSessionOrder(Request $request, Order $order): void
+    {
+        abort_unless(
+            ($request->user() && $order->customer_id === $request->user()->id)
+            || (! $request->user() && $order->customer_id === null),
+            403
+        );
     }
 }

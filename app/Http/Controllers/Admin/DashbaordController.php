@@ -6,7 +6,9 @@ use App\Enum\OrderStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\FoodItem;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Table;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,6 +71,24 @@ class DashbaordController extends Controller
             ->limit(8)
             ->get();
 
+        $popularItems = OrderItem::query()
+            ->select('food_item_id', DB::raw('SUM(quantity) as total_orders'))
+            ->with('foodItem:id,title')
+            ->whereHas('order', function ($query) {
+                $query->where('created_at', '>=', now()->subDays(30))
+                    ->whereNotIn('status', [OrderStatusEnum::Cancelled->value]);
+            })
+            ->groupBy('food_item_id')
+            ->orderByDesc('total_orders')
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->foodItem?->title ?? 'Unknown Item',
+                    'orders' => (int) $item->total_orders,
+                ];
+            });
+
         return Inertia::render('Admin/dashboard', [
             'total_menu_items' => $total_menu_items,
             'orders_count' => $orders_count,
@@ -83,6 +103,7 @@ class DashbaordController extends Controller
             'liveOrders' => $liveOrders,
             'recentOrders' => $recentOrders,
             'orderStatuses' => OrderStatusEnum::labels(),
+            'popularItems' => $popularItems,
         ]);
     }
 }

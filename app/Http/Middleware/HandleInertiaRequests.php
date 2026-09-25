@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Order;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -40,6 +41,7 @@ class HandleInertiaRequests extends Middleware
         $totalQuantity = $cartService->getTotalQuantity();
         $totalPrice = $cartService->getTotalPrice();
         $cartItems = $cartService->getCartItems();
+        $activeOrder = $this->activeOrder($request);
 
         return [
             ...parent::share($request),
@@ -67,11 +69,39 @@ class HandleInertiaRequests extends Middleware
             'totalQuantity' => $totalQuantity,
             'cartItems' => $cartItems,
             'subtotal' => $cartService->subtotal(),
-            'activeTable' => session('table_id') ? [
+            'activeTable' => $activeOrder && $activeOrder['table_id'] ? [
+                'id' => $activeOrder['table_id'],
+                'table_number' => $activeOrder['table_number'],
+            ] : (session('table_id') ? [
                 'id' => session('table_id'),
                 'table_number' => session('table_number'),
-            ] : null,
+            ] : null),
+            'activeOrder' => $activeOrder,
 
+        ];
+    }
+
+    private function activeOrder(Request $request): ?array
+    {
+        $order = Order::query()
+            ->with('table:id,table_number')
+            ->find(session('active_order_id'));
+
+        if (! $order || ! $order->isActive()) {
+            return null;
+        }
+
+        if (
+            ($request->user() && $order->customer_id !== $request->user()->id)
+            || (! $request->user() && $order->customer_id !== null)
+        ) {
+            return null;
+        }
+
+        return [
+            'id' => $order->id,
+            'table_id' => $order->table_id,
+            'table_number' => $order->table?->table_number,
         ];
     }
 }

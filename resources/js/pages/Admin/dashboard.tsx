@@ -3,8 +3,10 @@ import { useEcho } from '@laravel/echo-react';
 import {
     ArrowUpRight,
     Bell,
+    Building2Icon,
     ChevronDown,
     Clock3,
+    CloudOff,
     DollarSign,
     Ellipsis,
     Flame,
@@ -21,6 +23,7 @@ import {
     TrendingUp,
     Users,
     WalletCards,
+    WifiCog,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -33,7 +36,7 @@ import { dashboard, orderStatus } from '@/routes/admin';
 import type { Order } from '@/types/frontend/Order';
 import { create } from '@/routes/admin/tables';
 import { index } from '@/routes/admin/userOrders';
-import { OrderUser } from '@/types/admin/Order';
+import { OrderItem, OrderUser } from '@/types/admin/Order';
 
 type DashboardTableStatus = {
     id: number;
@@ -59,15 +62,15 @@ interface DashboardProps {
     liveOrders?: OrderUser[];
     recentOrders?: OrderUser[];
     orderStatuses?: Record<string, string>;
+    popularItems: OrderItem[],
 }
 
-const popularItems = [
-    { name: 'Chicken Momo', orders: 128, color: 'bg-blue-500' },
-    { name: 'Chowmein', orders: 96, color: 'bg-cyan-500' },
-    { name: 'Margherita Pizza', orders: 74, color: 'bg-indigo-500' },
-    { name: 'Sekuwa Platter', orders: 61, color: 'bg-violet-500' },
-    { name: 'Classic Lassi', orders: 48, color: 'bg-sky-400' },
-];
+
+
+import {
+   
+    useOfflineAdminOrders,
+} from '@/hooks/use-offline-admin-orders';
 
 const money = (value: number | string) =>
     `NPR ${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
@@ -151,6 +154,8 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
+
+
 export default function Dashboard({
     order: initialOrder,
     orders_count,
@@ -161,11 +166,13 @@ export default function Dashboard({
     active_tables,
     liveOrders = [],
     recentOrders = [],
+    popularItems = [],
 }: DashboardProps) {
     const [period, setPeriod] = useState('7 Days');
     const [search, setSearch] = useState('');
     const [selectedTable, setSelectedTable] = useState<string | null>(null);
     const [, setOrder] = useState<Order | undefined>(initialOrder);
+    const { online } = useOfflineAdminOrders();
 
     useEcho(
         `orders.${initialOrder?.id ?? 0}`,
@@ -211,6 +218,14 @@ export default function Dashboard({
             preserveScroll: true,
         });
     };
+
+    const progressColors = [
+        'bg-blue-500',
+        'bg-cyan-500',
+        'bg-indigo-500',
+        'bg-violet-500',
+        'bg-sky-400',
+    ];
 
     const summaryCards = [
         {
@@ -277,41 +292,14 @@ export default function Dashboard({
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="relative hidden w-56 lg:block">
-                            <Search className="absolute top-2.5 left-3 size-4 text-slate-400" />
-                            <Input
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                                placeholder="Search orders..."
-                                className="h-9 rounded-lg border-slate-200 bg-white pl-9 text-xs dark:border-slate-700 dark:bg-slate-900"
-                            />
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="relative size-9 rounded-lg border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
-                            aria-label="Notifications"
-                        >
-                            <Bell className="size-4" />
-                            <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-blue-600 text-[9px] text-white">
-                                4
-                            </span>
-                        </Button>
-                        <div className="hidden items-center gap-2 border-l border-slate-200 pl-3 sm:flex dark:border-slate-700">
-                            <div className="flex size-8 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
-                                AD
+                            <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${online ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                                }`}>
+                                {online ? <Building2Icon className="size-3.5" /> : <CloudOff className="size-3.5" />}
+                                {online ? 'Online' : 'Offline'}
                             </div>
-                            <div className="hidden text-left lg:block">
-                                <p className="text-xs font-semibold text-slate-900 dark:text-white">
-                                    Alex Dev
-                                </p>
-                                <p className="text-[10px] text-slate-500">
-                                    Administrator
-                                </p>
-                            </div>
-                            <ChevronDown className="size-3.5 text-slate-400" />
                         </div>
+
+
                     </div>
                 </div>
 
@@ -856,9 +844,7 @@ export default function Dashboard({
                         <Card className="border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
                             <CardHeader className="flex-row items-center justify-between space-y-0">
                                 <div>
-                                    <CardTitle className="text-base">
-                                        Popular food items
-                                    </CardTitle>
+                                    <CardTitle className="text-base">Popular food items</CardTitle>
                                     <p className="mt-1 text-xs text-slate-500">
                                         Most ordered this month
                                     </p>
@@ -866,29 +852,39 @@ export default function Dashboard({
                                 <Flame className="size-4 text-orange-500" />
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {popularItems.map((item, index) => (
-                                    <div key={item.name}>
-                                        <div className="mb-1.5 flex items-center justify-between text-xs">
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">
-                                                {index + 1}. {item.name}
-                                            </span>
-                                            <span className="text-slate-400">
-                                                {item.orders} orders
-                                            </span>
+                                {popularItems.length === 0 && (
+                                    <p className="text-center text-xs text-slate-400 py-4">
+                                        No orders recorded yet this month.
+                                    </p>
+                                )}
+
+                                {(() => {
+                                    const maxOrders = Math.max(...popularItems.map((i) => i.orders), 1);
+
+                                    return popularItems.map((item, index) => (
+                                        <div key={item.name}>
+                                            <div className="mb-1.5 flex items-center justify-between text-xs">
+                                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                                    {index + 1}. {item.name}
+                                                </span>
+                                                <span className="text-slate-400">
+                                                    {item.orders} {item.orders === 1 ? 'order' : 'orders'}
+                                                </span>
+                                            </div>
+                                            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                                <div
+                                                    className={cn(
+                                                        'h-full rounded-full transition-all duration-500',
+                                                        progressColors[index % progressColors.length],
+                                                    )}
+                                                    style={{
+                                                        width: `${(item.orders / maxOrders) * 100}%`,
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                                            <div
-                                                className={cn(
-                                                    'h-full rounded-full',
-                                                    item.color,
-                                                )}
-                                                style={{
-                                                    width: `${(item.orders / 128) * 100}%`,
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
+                                    ));
+                                })()}
                             </CardContent>
                         </Card>
                     </div>
