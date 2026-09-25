@@ -14,7 +14,6 @@ import {
     MoreHorizontal,
     Package,
     Plus,
-    Printer,
     RefreshCw,
     Search,
     ShoppingBag,
@@ -28,6 +27,7 @@ import {
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import AdminBillPrintButton from '@/components/AdminBillPrintButton';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,6 +63,19 @@ interface DashboardProps {
     recentOrders?: OrderUser[];
     orderStatuses?: Record<string, string>;
     popularItems: OrderItem[],
+    salesOverview?: Record<string, {
+        total_sales: number;
+        total_orders: number;
+        average_order_value: number;
+        change_percent: number;
+        points: Array<{ label: string; sales: number }>;
+    }>;
+    paymentOverview?: {
+        revenue: number;
+        payment_methods: Record<string, number>;
+        pending_amount: number;
+        counts: { paid: number; pending: number; failed: number; refunded: number };
+    };
 }
 
 
@@ -167,12 +180,50 @@ export default function Dashboard({
     liveOrders = [],
     recentOrders = [],
     popularItems = [],
+    salesOverview = {},
+    paymentOverview = {
+        revenue: 0,
+        payment_methods: {},
+        pending_amount: 0,
+        counts: { paid: 0, pending: 0, failed: 0, refunded: 0 },
+    },
 }: DashboardProps) {
     const [period, setPeriod] = useState('7 Days');
     const [search, setSearch] = useState('');
     const [selectedTable, setSelectedTable] = useState<string | null>(null);
     const [, setOrder] = useState<Order | undefined>(initialOrder);
     const { online } = useOfflineAdminOrders();
+    const selectedSales = salesOverview[period] ?? {
+        total_sales: 0,
+        total_orders: 0,
+        average_order_value: 0,
+        change_percent: 0,
+        points: [],
+    };
+    const chartPoints = selectedSales.points.length > 0
+        ? selectedSales.points
+        : [{ label: period, sales: 0 }];
+    const maxSales = Math.max(...chartPoints.map((point) => point.sales), 1);
+    const linePoints = chartPoints.map((point, index) => {
+        const x = chartPoints.length === 1 ? 350 : (index / (chartPoints.length - 1)) * 700;
+        const y = 195 - (point.sales / maxSales) * 165;
+        return `${x},${y}`;
+    }).join(' ');
+    const areaPoints = `0,220 ${linePoints} 700,220`;
+    const paymentTotal = paymentOverview.revenue + paymentOverview.pending_amount;
+    const paymentPercent = paymentTotal > 0
+        ? Math.round((paymentOverview.revenue / paymentTotal) * 100)
+        : 0;
+    const paymentRows = [
+        ['Cash', paymentOverview.payment_methods.Cash ?? 0],
+        ['Online', paymentOverview.payment_methods.Online ?? 0],
+        ['Card', paymentOverview.payment_methods.Card ?? 0],
+        ['Pending', paymentOverview.pending_amount],
+    ].map(([label, value]) => [
+        label,
+        money(Number(value)),
+        `${paymentTotal > 0 ? Math.round((Number(value) / paymentTotal) * 100) : 0}%`,
+    ]);
 
     useEcho(
         `orders.${initialOrder?.id ?? 0}`,
@@ -287,7 +338,7 @@ export default function Dashboard({
                     <div>
 
                         <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl dark:text-white">
-                            Good morning, Admin
+                            Welcome To Dashboard
                         </h1>
                     </div>
                     <div className="flex items-center gap-2">
@@ -382,11 +433,10 @@ export default function Dashboard({
                                 <div className="mb-4 flex flex-wrap items-end gap-6">
                                     <div>
                                         <p className="text-2xl font-bold text-slate-950 dark:text-white">
-                                            NPR 24,860
+                                            {money(selectedSales.total_sales)}
                                         </p>
-                                        <p className="mt-1 flex items-center gap-1 text-xs text-emerald-600">
-                                            <TrendingUp className="size-3.5" />{' '}
-                                            12.8% vs last period
+                                        <p className={cn('mt-1 flex items-center gap-1 text-xs', selectedSales.change_percent >= 0 ? 'text-emerald-600' : 'text-rose-600')}>
+                                            <TrendingUp className="size-3.5" /> {selectedSales.change_percent >= 0 ? '+' : ''}{selectedSales.change_percent}% vs last period
                                         </p>
                                     </div>
                                     <div className="text-xs">
@@ -394,7 +444,7 @@ export default function Dashboard({
                                             Total orders
                                         </p>
                                         <p className="mt-1 font-bold text-slate-800 dark:text-slate-200">
-                                            86
+                                            {selectedSales.total_orders}
                                         </p>
                                     </div>
                                     <div className="text-xs">
@@ -402,7 +452,7 @@ export default function Dashboard({
                                             Avg. order value
                                         </p>
                                         <p className="mt-1 font-bold text-slate-800 dark:text-slate-200">
-                                            NPR 289
+                                            {money(selectedSales.average_order_value)}
                                         </p>
                                     </div>
                                 </div>
@@ -446,12 +496,12 @@ export default function Dashboard({
                                                 />
                                             </linearGradient>
                                         </defs>
-                                        <path
-                                            d="M0 175 C55 164 72 132 126 145 S188 103 238 120 S301 74 350 96 S407 55 456 81 S513 42 560 59 S625 25 700 35 L700 220 L0 220 Z"
+                                        <polygon
+                                            points={areaPoints}
                                             fill="url(#salesFill)"
                                         />
-                                        <path
-                                            d="M0 175 C55 164 72 132 126 145 S188 103 238 120 S301 74 350 96 S407 55 456 81 S513 42 560 59 S625 25 700 35"
+                                        <polyline
+                                            points={linePoints}
                                             fill="none"
                                             stroke="#2563eb"
                                             strokeLinecap="round"
@@ -459,16 +509,8 @@ export default function Dashboard({
                                         />
                                     </svg>
                                     <div className="absolute inset-x-4 bottom-2 flex justify-between pl-7 text-[10px] text-slate-400">
-                                        {[
-                                            'Mon',
-                                            'Tue',
-                                            'Wed',
-                                            'Thu',
-                                            'Fri',
-                                            'Sat',
-                                            'Sun',
-                                        ].map((day) => (
-                                            <span key={day}>{day}</span>
+                                        {chartPoints.filter((_, index) => chartPoints.length <= 8 || index % Math.ceil(chartPoints.length / 8) === 0).map((point) => (
+                                            <span key={point.label}>{point.label}</span>
                                         ))}
                                     </div>
                                 </div>
@@ -488,19 +530,14 @@ export default function Dashboard({
                                         Today's revenue
                                     </p>
                                     <p className="mt-1 text-2xl font-bold text-blue-950 dark:text-blue-100">
-                                        NPR 24,860
+                                        {money(paymentOverview.revenue)}
                                     </p>
                                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-blue-950">
-                                        <div className="h-full w-[72%] rounded-full bg-blue-600" />
+                                        <div className="h-full rounded-full bg-blue-600" style={{ width: `${paymentPercent}%` }} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-xs">
-                                    {[
-                                        ['Cash', 'NPR 9,440', '39%'],
-                                        ['Online', 'NPR 11,820', '48%'],
-                                        ['Card', 'NPR 3,600', '13%'],
-                                        ['Pending', 'NPR 1,240', '5%'],
-                                    ].map(([label, value, percent]) => (
+                                    {paymentRows.map(([label, value, percent]) => (
                                         <div
                                             key={label}
                                             className="rounded-lg border border-slate-100 p-3 dark:border-slate-800"
@@ -516,7 +553,7 @@ export default function Dashboard({
                                     ))}
                                 </div>
                                 <p className="text-[11px] text-slate-400">
-                                    Paid 78 · Pending 5 · Failed 2 · Refunded 1
+                                    Paid {paymentOverview.counts.paid} · Pending {paymentOverview.counts.pending} · Failed {paymentOverview.counts.failed} · Refunded {paymentOverview.counts.refunded}
                                 </p>
                             </CardContent>
                         </Card>
@@ -944,15 +981,9 @@ export default function Dashboard({
                                                 </p>
                                             </div>
                                             <StatusBadge status={order.status} />
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-7"
-                                                type="button"
-                                                aria-label="Print receipt"
-                                            >
-                                                <Printer className="size-3.5" />
-                                            </Button>
+                                            {(order.payment_status === 'paid' || order.status === 'Served') && (
+                                                <AdminBillPrintButton order={order} />
+                                            )}
                                         </div>
                                     ))}
                                 </div>

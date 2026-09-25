@@ -74,7 +74,7 @@ const createConversation = (): Conversation => ({
             id: createId(),
             role: 'assistant',
             content:
-                'Hi! I’m your LTU Food assistant. Ask me about the menu, popular dishes, or what might be a good choice today.',
+                'Hi! I’m your  Food assistant. Ask me about the menu, popular dishes, or what might be a good choice today.',
             createdAt: new Date().toISOString(),
         },
     ],
@@ -386,7 +386,7 @@ export default function Chat({ foodItems }: ChatProps) {
                             </span>
                             <span>
                                 <span className="block text-sm leading-none font-bold">
-                                    LTU Food
+                                     Food
                                 </span>
                                 <span className="mt-1 block text-[10px] font-semibold tracking-[0.18em] text-muted-foreground">
                                     ASSISTANT
@@ -503,7 +503,7 @@ export default function Chat({ foodItems }: ChatProps) {
                             </Button>
                             <div>
                                 <h1 className="text-sm font-bold">
-                                    LTU Food Assistant
+                                     Food Assistant
                                 </h1>
                                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                     <span className="size-1.5 rounded-full bg-emerald-500" />

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { OrderUser } from '@/types/admin/Order';
 import { router } from '@inertiajs/react';
 import { orderStatus } from '@/routes/admin';
+import AdminBillPrintButton from '@/components/AdminBillPrintButton';
 import AdminOrderComposer from '@/components/AdminOrderComposer';
 
 interface StatsProps {
@@ -204,6 +205,9 @@ export default function Index({ orderUsers, orderStatuses, filters, stats, order
                                             >
                                                 View Items
                                             </button>
+                                            {(order.payment_status === 'paid' || order.status === 'Served') && (
+                                                <AdminBillPrintButton order={order} />
+                                            )}
                                         </td>
                                     </tr>
                                 ))

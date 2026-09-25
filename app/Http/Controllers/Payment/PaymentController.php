@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,7 +19,7 @@ class PaymentController extends Controller
         }
 
         if ($order->payment_status === 'paid' || $order->status === 'cancelled') {
-            return to_route('orders.receipt', $order->id);
+            return to_route('orders.receipt', $order);
         }
 
         return Inertia::render('Frontend/Order/PaymentOption', [
@@ -40,12 +41,16 @@ class PaymentController extends Controller
         ]);
 
         if ($request->payment_method === 'cash') {
-            $order->update([
-                'payment_method' => 'cash',
-            ]);
+            DB::transaction(function () use ($order): void {
+                $order->update([
+                    'payment_method' => 'cash_at_reception',
+                    'payment_status' => 'paid',
+                    'paid_at' => now(),
+                ]);
+            });
 
             return redirect()
-                ->route('orders.receipt', $order->id)
+                ->route('orders.receipt', $order)
                 ->with('message', 'Please proceed to the reception counter to pay your bill.');
         }
 

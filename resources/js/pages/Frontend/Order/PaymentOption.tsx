@@ -8,7 +8,7 @@ interface Order {
   id: number;
   order_number: string;
   total: number;
-  table?: { name: string };
+  table?: { table_number: string };
 }
 
 export default function PaymentOptions({ order }: { order: Order }) {
@@ -47,7 +47,7 @@ export default function PaymentOptions({ order }: { order: Order }) {
             {Money(order.total)}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Order #{order.order_number} {order.table ? `• Table: ${order.table.name}` : ''}
+            Order #{order.order_number} {order.table ? `• Table: ${order.table.table_number}` : ''}
           </p>
         </div>
 
