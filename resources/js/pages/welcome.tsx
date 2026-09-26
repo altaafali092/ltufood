@@ -26,6 +26,11 @@ const QUICK_REPLIES = [
     "Today's favourite",
 ];
 
+const csrfToken = (): string =>
+    document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content') ?? '';
+
 const GREETING: ChatMessage = {
     id: 1,
     role: 'assistant',
@@ -41,7 +46,6 @@ const WelcomePage = ({ foodItems, cartItems }: PageProps) => {
     const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const typingTimer = useRef<number | null>(null);
 
     // Keep the latest message in view
     useEffect(() => {
@@ -61,16 +65,13 @@ const WelcomePage = ({ foodItems, cartItems }: PageProps) => {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [chatOpen]);
 
-    useEffect(() => {
-        return () => {
-            if (typingTimer.current) window.clearTimeout(typingTimer.current);
-        };
-    }, []);
-
-    const pushMessage = (text: string) => {
+    const pushMessage = async (text: string) => {
         const trimmed = text.trim();
         if (!trimmed || isTyping) return;
 
+        const history = messages
+            .slice(-30)
+            .map(({ role, text: content }) => ({ role, content }));
         setMessages((prev) => [
             ...prev,
             { id: Date.now(), role: 'user', text: trimmed },
@@ -78,23 +79,67 @@ const WelcomePage = ({ foodItems, cartItems }: PageProps) => {
         setMessage('');
         setIsTyping(true);
 
-        // TODO: replace with a POST to your Laravel AI chat endpoint and render the real reply.
-        typingTimer.current = window.setTimeout(() => {
+        try {
+            const response = await fetch(chat.message().url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken(),
+                },
+                body: JSON.stringify({
+                    message: trimmed,
+                    history,
+                }),
+            });
+
+            const body = (await response.json().catch(() => null)) as {
+                message?: string;
+            } | null;
+
+            if (!response.ok) {
+                throw new Error(
+                    body?.message ??
+                        'The assistant is unavailable right now.',
+                );
+            }
+
+            if (!body?.message) {
+                throw new Error(
+                    'The assistant returned an invalid response. Please try again.',
+                );
+            }
+
             setMessages((prev) => [
                 ...prev,
                 {
                     id: Date.now() + 1,
                     role: 'assistant',
-                    text: 'Good call! Our Popular Picks below are a safe bet — Shahi Noodles is today\u2019s favourite. Give me a budget or a craving and I\u2019ll narrow it down.',
+                    text: body.message,
                 },
             ]);
+        } catch (error) {
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: Date.now() + 1,
+                    role: 'assistant',
+                    text:
+                        error instanceof Error
+                            ? error.message
+                            : 'The assistant is unavailable right now. Please try again.',
+                },
+            ]);
+        } finally {
             setIsTyping(false);
-        }, 1200);
+        }
     };
 
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        pushMessage(message);
+        void pushMessage(message);
     };
 
     return (
@@ -142,7 +187,7 @@ const WelcomePage = ({ foodItems, cartItems }: PageProps) => {
                             </span>
                             <div className="min-w-0">
                                 <h2 className="truncate text-sm font-bold tracking-tight">
-                                    LTU Food Assistant
+                                    Food Assistant
                                 </h2>
                                 <p className="truncate text-xs text-white/75">
                                     Ask me about the menu

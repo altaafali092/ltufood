@@ -1,26 +1,37 @@
 import { FoodItem } from '@/types/frontend/Index';
 import { Money } from '@/Utils/Money';
 import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface Props {
-    heroItems: FoodItem[]
-    addToCart: FoodItem[]
-
+    heroItems: FoodItem[];
+    addToCart: (item: FoodItem) => void;
 }
 
 export default function HeroCarousel({ heroItems, addToCart }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const activeHeroItems = useMemo(
+        () => heroItems.filter((item) => item.status),
+        [heroItems],
+    );
 
-    if (!heroItems || heroItems.length === 0) return null;
+    useEffect(() => {
+        setCurrentIndex((index) =>
+            activeHeroItems.length === 0
+                ? 0
+                : Math.min(index, activeHeroItems.length - 1),
+        );
+    }, [activeHeroItems.length]);
+
+    if (activeHeroItems.length === 0) return null;
 
     const nextSlide = () => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % heroItems.length);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % activeHeroItems.length);
     };
 
     const prevSlide = () => {
         setCurrentIndex((prevIndex) =>
-            prevIndex === 0 ? heroItems.length - 1 : prevIndex - 1
+            prevIndex === 0 ? activeHeroItems.length - 1 : prevIndex - 1
         );
     };
 
@@ -32,7 +43,7 @@ export default function HeroCarousel({ heroItems, addToCart }: Props) {
                 className="absolute inset-0 flex transition-transform duration-500 ease-out"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-                {heroItems.map((hero, index) => (
+                {activeHeroItems.map((hero, index) => (
                     <div key={index} className="w-full h-full shrink-0 relative">
                         <img
                             src={hero.images[0] || ""}
@@ -50,7 +61,7 @@ export default function HeroCarousel({ heroItems, addToCart }: Props) {
                 className="flex transition-transform duration-500 ease-out z-10"
                 style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
-                {heroItems.map((hero, index) => (
+                {activeHeroItems.map((hero, index) => (
                     <div key={hero.id || index} className="w-full shrink-0 p-9 max-md:p-5 flex flex-col justify-end">
                         <div className="relative max-w-md">
 
@@ -97,7 +108,7 @@ export default function HeroCarousel({ heroItems, addToCart }: Props) {
             </div>
 
             {/* --- NAVIGATION CONTROLS --- */}
-            {heroItems.length > 1 && (
+            {activeHeroItems.length > 1 && (
                 <>
                     <button
                         onClick={prevSlide}
@@ -117,7 +128,7 @@ export default function HeroCarousel({ heroItems, addToCart }: Props) {
 
                     {/* Indicator dots centered at the bottom layout */}
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                        {heroItems.map((_, index) => (
+                        {activeHeroItems.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}

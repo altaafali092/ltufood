@@ -18,6 +18,7 @@ Route::middleware(['auth', 'verified', 'prevent-user'])->group(function () {
     Route::get('dashboard', [DashbaordController::class, 'dashboard'])->name('dashboard');
     Route::resource('food-categories', FoodCategoryController::class);
     Route::resource('food-items', FoodItemController::class);
+    Route::patch('food-items/{foodItem}/status', [FoodItemController::class, 'status'])->name('foodItemStatus');
     Route::resource('sub-categories', SubCategoryController::class);
     Route::resource('tables', TableController::class);
     Route::patch('tables/{table}/tableUpdate', [TableController::class, 'tableUpdate'])->name('tableUpdate');

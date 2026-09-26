@@ -1,4 +1,5 @@
 import { FoodItem } from "@/types/frontend/Index";
+import { useState } from "react";
 
 export type CartStateItem = FoodItem & { qty: number };
 export type CartState = Record<number, CartStateItem>;
@@ -8,7 +9,7 @@ interface CartDrawerProps {
   onAdd: (item: FoodItem) => void;
   onRemove: (id: number) => void;
   onClose: () => void;
-  onOrder: () => void;
+  onOrder: (specialNote: string) => void;
   ordered: boolean;
   money: (price: number) => string;
   itemImage: (item: FoodItem) => string | null;
@@ -26,6 +27,7 @@ export default function CartDrawer({
   itemImage,
   itemEmoji,
 }: CartDrawerProps) {
+  const [specialNote, setSpecialNote] = useState("");
   const items = Object.values(cart);
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const service = Math.round(subtotal * 0.1);
@@ -136,6 +138,23 @@ export default function CartDrawer({
             {/* Totals + CTA */}
             {items.length > 0 && (
               <div className="px-6 pb-6 pt-4 border-t border-black/[0.08] dark:border-white/[0.08]">
+                <div className="mb-4">
+                  <label
+                    htmlFor="special-instruction"
+                    className="mb-1.5 block text-[12px] font-semibold text-slate-700 dark:text-slate-300"
+                  >
+                    Special instructions <span className="font-normal text-slate-400">(optional)</span>
+                  </label>
+                  <textarea
+                    id="special-instruction"
+                    value={specialNote}
+                    onChange={(event) => setSpecialNote(event.target.value)}
+                    maxLength={1000}
+                    rows={3}
+                    placeholder="e.g. No onions, extra spicy..."
+                    className="w-full resize-none rounded-[10px] border border-black/[0.1] bg-transparent px-3 py-2 text-[12px] text-slate-700 outline-none placeholder:text-slate-400 focus:border-[#00a37a] dark:border-white/[0.1] dark:text-slate-200"
+                  />
+                </div>
                 <div className="flex flex-col gap-2 mb-4">
                   {(
                     [
@@ -159,7 +178,7 @@ export default function CartDrawer({
                   </div>
                 </div>
                 <button
-                  onClick={onOrder}
+                  onClick={() => onOrder(specialNote.trim())}
                   className="w-full py-3.5 rounded-[14px] bg-gradient-to-br from-[#6bffb8] to-[#00d4aa] text-[#0d1117] text-sm font-bold uppercase tracking-[0.1em] border-none cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   Place Order

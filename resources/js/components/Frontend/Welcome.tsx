@@ -126,7 +126,7 @@ export default function Welcome({
     router.delete(`/cart/${id}`, requestOptions);
   };
 
-  const placeOrder = () => {
+  const placeOrder = (specialNote: string) => {
     if (Object.keys(cart).length === 0 || orderProcessing) {
       return;
     }
@@ -137,6 +137,7 @@ export default function Welcome({
       ordersStore().url,
       {
         table_id: pageProps.activeTable?.id ?? null,
+        notes: specialNote || null,
       },
       {
         preserveScroll: true,

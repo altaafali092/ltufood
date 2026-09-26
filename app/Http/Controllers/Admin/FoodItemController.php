@@ -17,7 +17,7 @@ class FoodItemController extends Controller
      */
     public function index()
     {
-        $foodItems = FoodItem::with(['subCategory'])->get();
+        $foodItems = FoodItem::with(['subCategory'])->latest()->get();
         return Inertia::render('Admin/FoodItem/Index', [
             'foodItems' => $foodItems,
         ]);

@@ -3,13 +3,14 @@ import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
 import Header from '@/components/Frontend/Header';
 import { useAppearance } from '@/hooks/use-appearance';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { ArrowLeft, CreditCard, ChevronDown } from 'lucide-react';
 import { Money } from '@/Utils/Money';
 import { home, orderPayment, orderTrack } from '@/routes';
 import { receipt } from '@/routes/orders';
 import { Order } from '@/types/frontend/Order';
 import { OrderItem } from '@/types/admin/Order';
+import { cn } from '@/lib/utils';
 
 interface OrderIndexProps {
     orders: Order[];
@@ -207,7 +208,6 @@ export default function Index({ orders, totalQuantity }: OrderIndexProps) {
     const isDark = resolvedAppearance === 'dark';
     const toggleTheme = () => updateAppearance(isDark ? 'light' : 'dark');
 
-    const handleBack = () => window.history.back();
 
     const toggleExpand = (id: number) => {
         setExpandedOrderId((prev) => (prev === id ? null : id));
@@ -316,14 +316,16 @@ export default function Index({ orders, totalQuantity }: OrderIndexProps) {
 
                 <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <Button
-                            onClick={handleBack}
-                            variant="outline"
-                            className="rounded-full w-fit dark:border-slate-700 dark:hover:bg-slate-800"
+                        <Link
+                            href={home().url}
+                            className={cn(
+                                buttonVariants({ variant: "outline" }),
+                                "rounded-full w-fit dark:border-slate-700 dark:hover:bg-slate-800"
+                            )}
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Back
-                        </Button>
+                        </Link>
 
                         <div className="sm:text-right">
                             <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">My Orders</h1>

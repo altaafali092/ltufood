@@ -6,6 +6,9 @@ import { EyeIcon, Pencil, Trash } from "lucide-react";
 
 import { FoodItem } from "@/types/admin/FoodItem";
 import { destroy, edit, show } from "@/routes/admin/food-items";
+import { foodItemStatus } from "@/routes/admin";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 export const columns: ColumnDef<FoodItem>[] = [
     {
@@ -42,10 +45,34 @@ export const columns: ColumnDef<FoodItem>[] = [
         accessorKey: "title",
         header: "Title",
     },
-    // {
-    //     accessorKey: "slug",
-    //     header: "Slug",
-    // },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+            const foodItem = row.original;
+
+            const updateToggle = () => {
+                // Changing server state should generally be a PATCH or PUT request
+                router.patch(
+                    foodItemStatus(foodItem.id),
+                    { is_occupied: !foodItem.status },
+                    { preserveScroll: true }
+                );
+            };
+
+            return (
+                <div className="flex items-center gap-3">
+                    <Switch
+                        checked={foodItem.status}
+                        onCheckedChange={updateToggle}
+                    />
+                    <Badge variant={foodItem.status ? 'destructive' : 'default'}>
+                        {foodItem.status ? 'on' : 'off'}
+                    </Badge>
+                </div>
+            );
+        },
+    },
 
     {
         id: "actions",

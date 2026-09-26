@@ -254,8 +254,13 @@ export default function Index({ orderUsers, orderStatuses, filters, stats, order
                         <p className="text-xs text-gray-500 mb-4">
 
                             Customer: {selectedOrder.customer?.name || 'Guest'} | Payment: {selectedOrder.payment_method?.toUpperCase()}
-
                         </p>
+                        {selectedOrder.notes && (
+                            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                                <span className="font-semibold">Special instructions:</span>{' '}
+                                {selectedOrder.notes}
+                            </p>
+                        )}
 
 
 
