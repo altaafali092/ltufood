@@ -1,0 +1,6 @@
+ <FloatingCartBar
+                totalQuantity={totalQuantity}
+                totalPrice={totalPrice}
+                cartOpen={cartOpen}
+                setCartOpen={setCartOpen}
+            />

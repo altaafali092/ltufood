@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import axios from 'axios';
-import Header from '@/components/Frontend/Header';
+import Header from '@/pages/Frontend/Layout/Header';
 import { useAppearance } from '@/hooks/use-appearance';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ArrowLeft, CreditCard, ChevronDown } from 'lucide-react';

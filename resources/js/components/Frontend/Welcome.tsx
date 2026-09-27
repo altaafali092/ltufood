@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAppearance } from "@/hooks/use-appearance";
-import Header from "./Header";
+import Header from "../../pages/Frontend/Layout/Header";
 import { FoodItem } from "@/types/frontend/Index";
 import FilterBar from "./FilterBar";
 import MenuGrid from "./MenuGrid";
@@ -11,6 +11,8 @@ import CartDrawer, { CartState } from "./CartDrawer";
 import { CartItem } from "@/types";
 import { Money } from "@/Utils/Money";
 import HeroCarousel from "./HeroCarousel";
+import { Mail, MapPin, Phone } from "lucide-react";
+import { OfficeSetting } from "@/types/frontend/officeSetting";
 
 
 const itemImage = (item: FoodItem): string | null =>
@@ -39,7 +41,9 @@ export default function Welcome({
 }: WelcomeProps) {
   const pageProps = usePage<{
     activeTable?: { id: number; table_number: string } | null;
+    officeSetting?: OfficeSetting | null;
   }>().props;
+  const officeSetting = pageProps.officeSetting;
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -158,12 +162,7 @@ export default function Welcome({
       className="min-h-screen bg-[#f7f8f7] dark:bg-[#080c10] text-slate-700 dark:text-slate-200"
       style={{ fontFamily: "'DM Sans', sans-serif" }}
     >
-      <Header
-        isDark={isDark}
-        toggleTheme={toggleTheme}
-        totalItems={totalQuantity}
-        setCartOpen={setCartOpen}
-      />
+     
 
       <main className="max-w-300 mx-auto px-6 pb-20 pt-9 max-md:px-4 max-md:pb-24 max-md:pt-5">
         {foodItems.length === 0 ? (
@@ -280,6 +279,66 @@ export default function Welcome({
           </>
         )}
       </main>
+
+      <footer className="border-t border-black/[0.08] bg-white dark:border-white/[0.08] dark:bg-[#0d1117]">
+        <div className="mx-auto grid max-w-300 gap-8 px-6 py-12 md:grid-cols-[1.4fr_1fr_1fr] max-md:px-4">
+          <div>
+            <p className="mb-3 text-xl font-bold text-slate-900 dark:text-white">
+              {officeSetting?.office_name || "LTU Food"}
+            </p>
+            <p className="max-w-md text-sm leading-6 text-slate-500 dark:text-slate-400">
+              {officeSetting?.description ||
+                "Delicious food, simple ordering, and a better dining experience."}
+            </p>
+          </div>
+
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8]">
+              Contact us
+            </p>
+            <div className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
+              {officeSetting?.office_address && (
+                <p className="flex items-start gap-2">
+                  <MapPin size={16} className="mt-0.5 shrink-0 text-[#00a37a]" />
+                  {officeSetting.office_address}
+                </p>
+              )}
+              {officeSetting?.office_phone && (
+                <a
+                  href={`tel:${officeSetting.office_phone}`}
+                  className="flex items-center gap-2 transition-colors hover:text-[#00a37a]"
+                >
+                  <Phone size={16} className="shrink-0 text-[#00a37a]" />
+                  {officeSetting.office_phone}
+                </a>
+              )}
+              {officeSetting?.office_email && (
+                <a
+                  href={`mailto:${officeSetting.office_email}`}
+                  className="flex items-center gap-2 transition-colors hover:text-[#00a37a]"
+                >
+                  <Mail size={16} className="shrink-0 text-[#00a37a]" />
+                  {officeSetting.office_email}
+                </a>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#00a37a] dark:text-[#6bffb8]">
+              Ordering
+            </p>
+            <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Browse our menu, add your favourites to the cart, and place your
+              order directly from your table.
+            </p>
+          </div>
+        </div>
+        <div className="border-t border-black/[0.08] px-6 py-4 text-center text-xs text-slate-400 dark:border-white/[0.08] dark:text-slate-500 max-md:px-4">
+          © {new Date().getFullYear()}{" "}
+          {officeSetting?.office_name || "LTU Food"}. All rights reserved.
+        </div>
+      </footer>
 
       {/* Floating Cart Bar */}
       {totalQuantity > 0 && !cartOpen && (

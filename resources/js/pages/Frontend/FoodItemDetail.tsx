@@ -2,16 +2,16 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import { ChevronLeft, Share2, Heart, Check, Loader2 } from 'lucide-react'
 import { useState, useMemo } from 'react'
 
-import type { CartState } from '@/components/Frontend/CartDrawer';
-import CartDrawer from '@/components/Frontend/CartDrawer'
-import FloatingCartBar from '@/components/Frontend/FloatingCartBar'
-import Header from '@/components/Frontend/Header'
+
+import Header from '@/pages/Frontend/Layout/Header'
 import { QuantityControls } from '@/components/Frontend/QuantityControls'
 import { useAppearance } from '@/hooks/use-appearance'
 import { cartStore, cartUpdate, ordersStore } from '@/routes'
 import type { CartItem } from '@/types'
 import type { FoodItem } from '@/types/frontend/Index'
 import { Money } from '@/Utils/Money';
+import { CartState } from '@/types/frontend/menu'
+import FloatingCartBar from '@/components/Frontend/cart/FloatingCartBar'
 
 
 
@@ -357,13 +357,13 @@ export default function FoodItemDetailPage() {
         </div>
       </div>
 
-      {totalQuantity > 0 && !cartOpen && (
-        <FloatingCartBar
-          totalQuantity={totalQuantity}
-          subtotal={totalPrice}
-          onOpenCart={() => setCartOpen(true)}
-        />
-      )}
+      
+      <FloatingCartBar
+                totalQuantity={totalQuantity}
+                totalPrice={totalPrice}
+                cartOpen={cartOpen}
+                setCartOpen={setCartOpen}
+            />
 
       {cartOpen && (
         <CartDrawer
