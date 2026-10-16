@@ -97,10 +97,15 @@ export default function AdminOrderComposer({ tables, foodItems, customers }: Pro
     return (
         <>
             <div className="flex flex-wrap items-center gap-2">
-                <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                    online ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                }`}>
-                    {online ? <Wifi className="size-3.5" /> : <CloudOff className="size-3.5" />}
+                <div
+                    title={
+                        online
+                            ? 'Connected. New orders sync instantly.'
+                            : 'Offline. Orders are queued and synced automatically.'
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${online ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700 animate-pulse'
+                        }`}>
+                    {online ? <Wifi className="size-3.5 animate-pulse text-yellow-500" /> : <CloudOff className="size-3.5 text-amber-700 animate-pulse " />}
                     {online ? 'Online' : 'Offline'}
                 </div>
                 {orders.length > 0 && (

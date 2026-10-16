@@ -2,6 +2,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    phone?: string | null;
 }
 
 export interface Table {
@@ -21,6 +22,7 @@ export interface OrderItem {
     quantity: number;
     price_at_time: number;
     food_item?: FoodItem;
+    special_notes?: string | null;
     total_price: number;
 }
 
@@ -30,8 +32,7 @@ export interface OrderUser {
     order_type: 'dine_in' | 'takeaway' | 'delivery';
     status: 'Pending' | 'Preparing' | 'Ready' | 'Served' | 'Cancelled';
     payment_method: 'esewa' | 'cash_at_reception' | 'card' | 'khalti' | null;
-    payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded'
-    ;
+    payment_status: 'unpaid' | 'paid' | 'failed' | 'refunded';
     subtotal: number;
     discount_amount: number;
     tax_amount: number;

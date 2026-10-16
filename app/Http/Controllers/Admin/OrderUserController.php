@@ -25,6 +25,7 @@ class OrderUserController extends Controller
     {
         $search = $request->input('search');
         $status = $request->input('status', 'all');
+        $date = $request->input('date', 'all');
 
         // Summary stats calculated directly in database
         $stats = [
@@ -44,11 +45,19 @@ class OrderUserController extends Controller
                         });
                 });
             })
-            ->when($status && $status !== 'all', function ($query, $status) {
+            ->when($status && $status !== 'all', function ($query) use ($status) {
                 $query->where('status', $status);
             })
+            ->when($date && $date !== 'all', function ($query) use ($date) {
+                match ($date) {
+                    'today' => $query->whereDate('created_at', today()),
+                    'yesterday' => $query->whereDate('created_at', today()->subDay()),
+                    'week' => $query->whereBetween('created_at', [today()->startOfWeek(), today()->endOfWeek()]),
+                    default => $query,
+                };
+            })
             ->latest()
-            ->get();
+            ->paginate(10);
 
         return Inertia::render('Admin/Order/Index', [
             'orderUsers' => $orderUsers,
@@ -56,6 +65,7 @@ class OrderUserController extends Controller
             'filters' => [
                 'search' => $search ?? '',
                 'status' => $status ?? 'all',
+                'date' => $date ?? 'all',
             ],
             'stats' => $stats,
             'orderTables' => Table::query()

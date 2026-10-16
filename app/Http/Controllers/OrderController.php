@@ -25,6 +25,7 @@ class OrderController extends Controller
 {
     public function store(Request $request, CartService $cartService): RedirectResponse
     {
+
         $validated = $request->validate([
             'table_id' => ['nullable', 'exists:tables,id'],
             'order_type' => ['nullable', 'string', 'in:dine_in,takeaway,delivery'],
@@ -135,7 +136,7 @@ class OrderController extends Controller
 
         $availableTables = Table::query()
             ->available()
-            ->when($order->table_id, fn ($query) => $query->where('id', '!=', $order->table_id))
+            ->when($order->table_id, fn($query) => $query->where('id', '!=', $order->table_id))
             ->whereDoesntHave('orders', function ($query) {
                 $query->whereNotIn('status', [
                     OrderStatusEnum::Cancelled->value,
@@ -266,7 +267,7 @@ class OrderController extends Controller
     private function generateOrderNumber(): string
     {
         do {
-            $orderNumber = 'ORD-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+            $orderNumber = 'ORD-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
         } while (Order::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;
@@ -295,7 +296,7 @@ class OrderController extends Controller
     {
         abort_unless(
             ($request->user() && $order->customer_id === $request->user()->id)
-            || (! $request->user() && $order->customer_id === null),
+                || (! $request->user() && $order->customer_id === null),
             403
         );
     }

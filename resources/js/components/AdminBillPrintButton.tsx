@@ -1,16 +1,21 @@
 import { Printer } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { OrderUser } from '@/types/admin/Order';
+import { cn } from '@/lib/utils';
+import type { OrderUser } from '@/types/admin/Order';
 
 const escapeHtml = (value: string): string =>
-    value.replace(/[&<>"']/g, (character) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;',
-    })[character] ?? character);
+    value.replace(
+        /[&<>"']/g,
+        (character) =>
+            ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            })[character] ?? character,
+    );
 
 const money = (value: number | string): string =>
     `NPR ${Number(value).toLocaleString('en-IN', {
@@ -18,7 +23,13 @@ const money = (value: number | string): string =>
         maximumFractionDigits: 2,
     })}`;
 
-export default function AdminBillPrintButton({ order }: { order: OrderUser }) {
+export default function AdminBillPrintButton({
+    order,
+    compact = false,
+}: {
+    order: OrderUser;
+    compact?: boolean;
+}) {
     const printBill = () => {
         const printWindow = window.open('', '_blank', 'width=480,height=720');
 
@@ -26,15 +37,20 @@ export default function AdminBillPrintButton({ order }: { order: OrderUser }) {
             return;
         }
 
-        const items = (order.items ?? []).map((item) => `
+        const items = (order.items ?? [])
+            .map(
+                (item) => `
             <tr>
                 <td>${escapeHtml(item.food_item?.title ?? `Food Item #${item.food_item_id}`)}</td>
                 <td>${item.quantity}</td>
                 <td>${money(item.price_at_time)}</td>
                 <td>${money(item.total_price)}</td>
             </tr>
-        `).join('');
-        const paymentLabel = order.payment_status === 'paid' ? 'Paid' : 'Payment Pending';
+        `,
+            )
+            .join('');
+        const paymentLabel =
+            order.payment_status === 'paid' ? 'Paid' : 'Payment Pending';
 
         printWindow.document.write(`
             <!doctype html>
@@ -87,13 +103,17 @@ export default function AdminBillPrintButton({ order }: { order: OrderUser }) {
         <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="size-8 text-emerald-600 hover:text-emerald-700"
+            size={compact ? 'sm' : 'icon'}
+            className={cn(
+                'gap-2 text-emerald-600 hover:text-emerald-700',
+                !compact && 'size-8',
+            )}
             onClick={printBill}
             aria-label={`Print bill for ${order.order_number || `order ${order.id}`}`}
             title="Print bill"
         >
             <Printer className="size-4" />
+            {compact ? 'Receipt' : null}
         </Button>
     );
 }
