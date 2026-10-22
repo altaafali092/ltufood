@@ -27,6 +27,9 @@ Route::middleware(['auth', 'verified', 'prevent-user'])->group(function () {
     Route::post('userOrders/sync', [OrderUserController::class, 'storeOfflineOrder'])->name('userOrders.sync');
     Route::patch('orderUser/{orderUser}', [OrderUserController::class, 'status'])
         ->name('orderStatus');
+    Route::patch('orderUser/{orderUser}/bill-status', [OrderUserController::class, 'billUpdate'])
+        ->name('orderBillStatus');
+
     Route::get('sales-report', [SalesReportController::class, 'index'])->name('sales-report.index');
     Route::get('sales-report/export', [SalesReportController::class, 'export'])->name('sales-report.export');
 

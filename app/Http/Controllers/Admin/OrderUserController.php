@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\AdminOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
@@ -61,7 +62,7 @@ class OrderUserController extends Controller
 
         return Inertia::render('Admin/Order/Index', [
             'orderUsers' => $orderUsers,
-            'orderStatuses' => OrderStatusEnum::labels(), // Returns key-value pair of statuses
+            'orderStatuses' => OrderStatusEnum::labels(),
             'filters' => [
                 'search' => $search ?? '',
                 'status' => $status ?? 'all',
@@ -93,67 +94,32 @@ class OrderUserController extends Controller
         ], $existing ? 200 : 201);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
     public function status(Request $request, Order $orderUser)
     {
         $validated = $request->validate([
             'status' => ['required', Rule::enum(OrderStatusEnum::class)],
         ]);
-
         $orderUser->update([
             'status' => $validated['status'],
         ]);
-        // Broadcast to everyone listening on "orders.{id}"
         broadcast(new OrderStatusUpdated($orderUser));
-
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Order status updated successfully.')]);
+
+        return back();
+    }
+
+    public function billUpdate(Request $request, Order $orderUser)
+    {
+        $validated = $request->validate([
+            'payment_status' => ['required', Rule::in(['unpaid', 'paid', 'failed', 'refunded'])],
+            'payment_method' => ['required', Rule::in(['esewa', 'cash_at_reception', 'card', 'khalti'])],
+        ]);
+
+        $orderUser->update($validated + [
+            'updated_by' => Auth::id(),
+        ]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Payment information updated successfully.')]);
 
         return back();
     }

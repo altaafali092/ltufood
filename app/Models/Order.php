@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'notes',
     'checked_out_at',
     'paid_at',
+    'updated_by',
 
 ])]
 
@@ -67,6 +68,11 @@ class Order extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     public function items(): HasMany

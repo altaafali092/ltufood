@@ -43,4 +43,5 @@ export interface OrderUser {
     customer?: User;
     table?: Table;
     items?: OrderItem[];
+    updated_by:User[];
 }

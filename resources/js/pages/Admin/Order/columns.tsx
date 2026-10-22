@@ -1,5 +1,5 @@
 import { ColumnDef } from '@tanstack/react-table';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     Bike,
     CalendarDays,
@@ -25,6 +25,7 @@ import {
 
 import { OrderUser } from '@/types/admin/Order';
 import { destroy } from '@/routes/admin/userOrders';
+import { updateStatus } from '@/actions/App/Http/Controllers/OrderController';
 
 const STATUS_STYLES: Record<string, string> = {
     pending:
@@ -70,226 +71,248 @@ export const columns = (
     onViewDetails: (order: OrderUser) => void,
     onPrintBills: (order: OrderUser) => void,
 ): ColumnDef<OrderUser>[] => [
-        {
-            accessorKey: 'id',
-            header: 'Id',
-            cell: ({ row }) => row.index + 1,
-        },
-        {
-            accessorKey: 'order_number',
-            header: 'Order',
-            cell: ({ row }) => {
-                const order = row.original;
+    {
+        accessorKey: 'id',
+        header: 'Id',
+        cell: ({ row }) => row.index + 1,
+    },
+    {
+        accessorKey: 'order_number',
+        header: 'Order',
+        cell: ({ row }) => {
+            const order = row.original;
 
-                return (
-                    <div className="min-w-30 space-y-1">
-                        <div className="font-mono text-sm font-semibold">
-                            {order.order_number || `#${order.id}`}
+            return (
+                <div className="min-w-30 space-y-1">
+                    <div className="font-mono text-sm font-semibold">
+                        {order.order_number || `#${order.id}`}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="size-3" />
+                        {order.created_at
+                            ? new Date(order.created_at).toLocaleTimeString()
+                            : ''}
+                    </div>
+                </div>
+            );
+        },
+    },
+
+    {
+        accessorKey: 'order_type',
+        header: 'Table NO./Name',
+        cell: ({ row }) => {
+            const costumerName = row.original.customer?.name;
+            const TableNumber = row.original.table?.table_number;
+            const OrderIcon = getOrderIcon(TableNumber ?? '');
+
+            return (
+                <div className="flex items-center gap-2.5">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/50 text-muted-foreground">
+                        <OrderIcon className="size-4" />
+                    </div>
+
+                    <div className="space-y-1">
+                        <div className="font-medium">
+                            {formatOrderType(TableNumber ?? '')}
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Clock className="size-3" />
-                            {order.created_at
-                                ? new Date(order.created_at).toLocaleTimeString()
-                                : ''}
+                        <div className="text-xs text-muted-foreground">
+                            {costumerName}
                         </div>
                     </div>
-                );
-            },
+                </div>
+            );
         },
+    },
+    {
+        accessorKey: 'status',
+        header: 'Order Status',
+        cell: ({ row }) => {
+            const { orderStatuses } = usePage<{
+                orderStatuses: Record<string, string>;
+            }>().props;
+            const order = row.original;
+            const currentStatus = order.status;
 
-        {
-            accessorKey: 'order_type',
-            header: 'Table NO./Name',
-            cell: ({ row }) => {
-                const costumerName = row.original.customer?.name;
-                const TableNumber = row.original.table?.table_number;
-                const OrderIcon = getOrderIcon(TableNumber ?? '');
+            const handleStatusChange = (newStatus: string) => {
+                if (newStatus === currentStatus) return;
 
-                return (
-                    <div className="flex items-center gap-2.5">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-muted/50 text-muted-foreground">
-                            <OrderIcon className="size-4" />
-                        </div>
+                router.patch(
+                    updateStatus(order.id),
+                    { status: newStatus },
+                    { preserveScroll: true },
+                );
+            };
 
-                        <div className="space-y-1">
-                            <div className="font-medium">
-                                {formatOrderType(TableNumber ?? '')}
-                            </div>
+            return (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-0 hover:bg-transparent"
+                        >
+                            <Badge
+                                variant="outline"
+                                className="cursor-pointer px-2.5 py-1 font-medium"
+                            >
+                                {orderStatuses?.[currentStatus] ??
+                                    currentStatus ??
+                                    'Select Status'}
+                            </Badge>
+                        </Button>
+                    </DropdownMenuTrigger>
 
-                            <div className="text-xs text-muted-foreground">
-                                {costumerName}
-                            </div>
+                    <DropdownMenuContent align="end">
+                        {Object.entries(orderStatuses ?? {}).map(
+                            ([value, label]) => (
+                                <DropdownMenuItem
+                                    key={value}
+                                    onClick={() => handleStatusChange(value)}
+                                    className={
+                                        value === currentStatus
+                                            ? 'bg-accent font-semibold'
+                                            : ''
+                                    }
+                                >
+                                    {label}
+                                </DropdownMenuItem>
+                            ),
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            );
+        },
+    },
+    {
+        accessorKey: 'payment_status',
+        header: 'Payment Status',
+        cell: ({ row }) => {
+            const paymentStatus = row.original.payment_status;
+
+            return (
+                <Badge
+                    className={
+                        paymentStatus?.toLowerCase() === 'paid'
+                            ? 'rounded-full border border-emerald-500 bg-green-100 text-green-700 hover:bg-green-100'
+                            : 'rounded-full border border-red-400 bg-red-100 text-red-700 hover:bg-red-100'
+                    }
+                >
+                    {paymentStatus?.toLowerCase() === 'paid'
+                        ? 'Paid'
+                        : 'Unpaid'}
+                </Badge>
+            );
+        },
+    },
+    {
+        accessorKey: 'created_at',
+        header: 'Date',
+        cell: ({ row }) => {
+            const date = row.original.created_at;
+
+            if (!date) {
+                return <span className="text-muted-foreground">—</span>;
+            }
+
+            const parsedDate = new Date(date);
+
+            if (Number.isNaN(parsedDate.getTime())) {
+                return <span className="text-muted-foreground">—</span>;
+            }
+
+            return (
+                <div className="flex items-start gap-2">
+                    <CalendarDays className="mt-0.5 size-4 text-muted-foreground" />
+
+                    <div className="space-y-1">
+                        <div className="text-sm font-medium">
+                            {parsedDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                            })}
                         </div>
                     </div>
-                );
-            },
+                </div>
+            );
         },
+    },
 
-        {
-            accessorKey: 'status',
-            header: 'Status',
-            cell: ({ row }) => {
-                const status = row.original.status;
-                const normalizedStatus = status?.toLowerCase();
+    {
+        id: 'actions',
+        header: () => <div className="text-right">Actions</div>,
+        cell: ({ row }) => {
+            const order = row.original;
 
-                return (
-                    <Badge
-                        variant="outline"
-                        className={`rounded-full px-2.5 py-1 font-medium ${STATUS_STYLES[normalizedStatus] ??
-                            'border-border bg-muted/50 text-muted-foreground'
-                            }`}
+            return (
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2"
+                        title="view Detail"
+                        onClick={() => onViewDetails(order)}
                     >
-                        <span
-                            className={`mr-1.5 size-1.5 rounded-full ${normalizedStatus === 'pending'
-                                ? 'bg-amber-500'
-                                : normalizedStatus === 'cancelled'
-                                    ? 'bg-red-500'
-                                    : [
-                                        'completed',
-                                        'served',
-                                        'delivered',
-                                    ].includes(normalizedStatus)
-                                        ? 'bg-emerald-500'
-                                        : 'bg-blue-500'
-                                }`}
-                        />
-                        {formatStatus(status || 'Unknown')}
-                    </Badge>
-                );
-            },
-        },
-        {
-            accessorKey: 'payment_status',
-            header: 'Payment Status',
-            cell: ({ row }) => {
-                const paymentStatus = row.original.payment_status;
-
-                return (
-                    <Badge
-                        className={
-                            paymentStatus?.toLowerCase() === 'paid'
-                                ? 'rounded-full border border-emerald-500 bg-green-100 text-green-700 hover:bg-green-100'
-                                : 'rounded-full border border-red-400 bg-red-100 text-red-700 hover:bg-red-100'
-                        }
-                    >
-                        {paymentStatus?.toLowerCase() === 'paid'
-                            ? 'Paid'
-                            : 'Unpaid'}
-                    </Badge>
-                );
-            },
-        },
-        {
-            accessorKey: 'created_at',
-            header: 'Date',
-            cell: ({ row }) => {
-                const date = row.original.created_at;
-
-                if (!date) {
-                    return <span className="text-muted-foreground">—</span>;
-                }
-
-                const parsedDate = new Date(date);
-
-                if (Number.isNaN(parsedDate.getTime())) {
-                    return <span className="text-muted-foreground">—</span>;
-                }
-
-                return (
-                    <div className="flex items-start gap-2">
-                        <CalendarDays className="mt-0.5 size-4 text-muted-foreground" />
-
-                        <div className="space-y-1">
-                            <div className="text-sm font-medium">
-                                {parsedDate.toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                );
-            },
-        },
-
-        {
-            id: 'actions',
-            header: () => <div className="text-right">Actions</div>,
-            cell: ({ row }) => {
-                const order = row.original;
-
-                return (
-                    <div className="flex items-center justify-end gap-1">
+                        <Eye className="size-4" />
+                    </Button>
+                    {order.status == 'Served' && (
                         <Button
                             variant="ghost"
                             size="sm"
                             className="gap-2"
-                            title='view Detail'
-                            onClick={() => onViewDetails(order)}
+                            title="Print Bill"
+                            onClick={() => onPrintBills(order)}
                         >
-                            <Eye className="size-4"
-                            />
-
+                            <Printer className="size-4" />
                         </Button>
-                        {order.payment_status == "paid" && (
+                    )}
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                             <Button
                                 variant="ghost"
-                                size="sm"
-                                className="gap-2"
-                                title='Print Bill'
-                                onClick={() => onPrintBills(order)}
+                                size="icon"
+                                className="size-8"
+                                aria-label="Order actions"
                             >
-                                <Printer className="size-4"
-                                />
-
+                                <MoreHorizontal className="size-4" />
                             </Button>
-                        )}
+                        </DropdownMenuTrigger>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="size-8"
-                                    aria-label="Order actions"
-                                >
-                                    <MoreHorizontal className="size-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-
-                            <DropdownMenuContent align="end" className="w-44">
-                                {/* <DropdownMenuItem
+                        <DropdownMenuContent align="end" className="w-44">
+                            {/* <DropdownMenuItem
                                     onSelect={() => onViewDetails(order)}
                                 >
                                     <Eye className="mr-2 size-4" />
                                     View details
                                 </DropdownMenuItem> */}
 
-                                <DropdownMenuSeparator />
+                            <DropdownMenuSeparator />
 
-                                <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
-                                    onSelect={() => {
-                                        if (
-                                            confirm(
-                                                'Are you sure you want to delete this order?',
-                                            )
-                                        ) {
-                                            router.delete(destroy(order.id).url, {
-                                                preserveScroll: true,
-                                            });
-                                        }
-                                    }}
-                                >
-                                    <Trash2 className="mr-2 size-4" />
-                                    Delete order
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                );
-            },
+                            <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => {
+                                    if (
+                                        confirm(
+                                            'Are you sure you want to delete this order?',
+                                        )
+                                    ) {
+                                        router.delete(destroy(order.id).url, {
+                                            preserveScroll: true,
+                                        });
+                                    }
+                                }}
+                            >
+                                <Trash2 className="mr-2 size-4" />
+                                Delete order
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            );
         },
-    ];
+    },
+];

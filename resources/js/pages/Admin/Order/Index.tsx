@@ -9,39 +9,40 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import AdminBillPrintButton from '@/components/AdminBillPrintButton';
 import AdminOrderComposer from '@/components/AdminOrderComposer';
-import AdminOrderKitchenTicketButton from '@/components/AdminOrderKitchenTicketButton';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { useOfflineAdminOrders } from '@/hooks/use-offline-admin-orders';
-import { cn } from '@/lib/utils';
-import { orderStatus } from '@/routes/admin';
-import userOrders from '@/routes/admin/userOrders';
-import type { OrderUser } from '@/types/admin/Order';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { DataTable } from '@/components/data-table';
 import { columns } from './columns';
-import { PaginatedData } from '@/types';
-import { Money } from '@/Utils/Money';
 import Pagination from '@/components/Pagination';
 import OrderDetail from '@/components/Admin/OrderUser/OrderDetail';
 import AdminBillReceipt from '@/components/Admin/OrderUser/AdminBillReceipt';
-import { OfficeSetting } from '@/types/admin/OfficeSetting';
+
+import { updateStatus } from '@/actions/App/Http/Controllers/OrderController';
+import userOrders from '@/routes/admin/userOrders';
+import { orderBillStatus } from '@/routes/admin';
+
+import type { OrderUser } from '@/types/admin/Order';
+import type { PaginatedData } from '@/types';
+import type { OfficeSetting } from '@/types/admin/OfficeSetting';
+
+import { cn } from '@/lib/utils';
+import { Money } from '@/Utils/Money';
 
 interface StatsProps {
     totalOrders: number;
@@ -67,17 +68,10 @@ interface OrderProps {
         phone?: string | null;
         email: string;
     }>;
-    officeSetting: OfficeSetting
+    officeSetting: OfficeSetting;
 }
 
-type DateFilter = 'all' | 'today' | 'yesterday' | 'week';
 
-const DATE_FILTERS: Array<{ value: DateFilter; label: string }> = [
-    { value: 'all', label: 'All time' },
-    { value: 'today', label: 'Today' },
-    { value: 'yesterday', label: 'Yesterday' },
-    { value: 'week', label: 'This Week' },
-];
 
 const STATUS_STYLES: Record<string, string> = {
     Pending: 'border-amber-200 bg-amber-50 text-amber-700',
@@ -87,27 +81,10 @@ const STATUS_STYLES: Record<string, string> = {
     Cancelled: 'border-rose-200 bg-rose-50 text-rose-700',
 };
 
-const PAYMENT_STYLES: Record<string, string> = {
-    paid: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    unpaid: 'border-amber-200 bg-amber-50 text-amber-700',
-    failed: 'border-rose-200 bg-rose-50 text-rose-700',
-    refunded: 'border-slate-200 bg-slate-100 text-slate-600',
-};
-
 const orderTypeLabel = (type: OrderUser['order_type']): string =>
     (type ?? 'dine_in')
         .replace('_', ' ')
         .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-const shortOrderId = (order: OrderUser): string => {
-    if (!order.order_number) {
-        return `#${String(order.id).padStart(4, '0')}`;
-    }
-
-    const segment = order.order_number.split('-').pop() ?? order.order_number;
-
-    return `#${segment.toUpperCase()}`;
-};
 
 export default function Index({
     orderUsers,
@@ -117,28 +94,26 @@ export default function Index({
     orderTables,
     orderFoodItems,
     orderCustomers,
-    officeSetting
+    officeSetting,
 }: OrderProps) {
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters.status || 'all',
     );
-    const [selectedDate, setSelectedDate] = useState<DateFilter>(
-        (filters.date as DateFilter) || 'all',
-    );
+  
+
     const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+    const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
     const [selectedBillOrderId, setSelectedBillOrderId] = useState<number | null>(null);
 
-
-
-    const { online, orders: queuedOrders } = useOfflineAdminOrders();
+    const [paymentStatus, setPaymentStatus] = useState<string>('paid');
+    const [paymentMethod, setPaymentMethod] = useState<string>('cash_at_reception');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isFirstRender = useRef(true);
 
     const selectedOrder = useMemo(
-        () =>
-            orderUsers.data.find((order) => order.id === selectedOrderId) ??
-            null,
+        () => orderUsers.data.find((order) => order.id === selectedOrderId) ?? null,
         [orderUsers, selectedOrderId],
     );
 
@@ -147,42 +122,75 @@ export default function Index({
         [orderUsers, selectedBillOrderId],
     );
 
+    // Triggered when user clicks "Print Bill"
+    const handleInitiatePrintBill = (order: OrderUser) => {
+        if (order.payment_status === 'paid' && order.updated_by !== null) {
+            setSelectedBillOrderId(order.id);
+            return;
+        }
+        setUpdatingOrderId(order.id);
+        setPaymentStatus(order.payment_status || 'paid');
+        setPaymentMethod(order.payment_method || 'cash_at_reception');
+    };
+
+    // Submits payment updates and then triggers the bill receipt
+    const handleSaveAndPrintBill = () => {
+        if (!updatingOrderId) return;
+        setIsSubmitting(true);
+
+        router.patch(
+            orderBillStatus(updatingOrderId),
+            {
+                payment_status: paymentStatus,
+                payment_method: paymentMethod,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmitting(false);
+                    const currentId = updatingOrderId;
+                    setUpdatingOrderId(null);
+                    setSelectedBillOrderId(currentId);
+                },
+                onError: () => {
+                    setIsSubmitting(false);
+                },
+            },
+        );
+    };
+
     const orderColumns = useMemo(
         () =>
             columns(
                 (order) => setSelectedOrderId(order.id),
-                (order) => setSelectedBillOrderId(order.id)
+                handleInitiatePrintBill,
             ),
         [],
     );
 
-
-
+    // Filter and search query handler using Wayfinder route builder
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
-
             return;
         }
 
         const timer = setTimeout(() => {
             router.get(
-                userOrders.index().url,
-                {
-                    search: searchTerm,
-                    status: selectedStatus,
-                    date: selectedDate,
-                },
+                userOrders.index({
+                    query: {
+                        search: searchTerm,
+                        status: selectedStatus,
+                       
+                    },
+                }).url,
+                {},
                 { preserveState: true, replace: true },
             );
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [searchTerm, selectedStatus, selectedDate]);
-
-    const handleStatusChange = (orderId: number, newStatus: string) => {
-        router.patch(orderStatus(orderId), { status: newStatus });
-    };
+    }, [searchTerm, selectedStatus]);
 
     const kpis = useMemo(
         () => [
@@ -223,12 +231,10 @@ export default function Index({
             <Head title="Orders" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6">
-                {/* Top bar */}
+                {/* Header Section */}
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            Orders
-                        </h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
                         <p className="text-sm text-muted-foreground">
                             Live restaurant orders, payments and kitchen status.
                         </p>
@@ -243,37 +249,40 @@ export default function Index({
                     </div>
                 </div>
 
-                {/* KPI cards */}
+                {/* KPI Cards */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    {kpis.map((kpi) => (
-                        <div
-                            key={kpi.label}
-                            className="flex items-center gap-4 rounded-xl border bg-card p-5 shadow-sm"
-                        >
-                            <span
-                                className={cn(
-                                    'flex size-11 shrink-0 items-center justify-center rounded-lg',
-                                    kpi.tone,
-                                )}
+                    {kpis.map((kpi) => {
+                        const IconComponent = kpi.icon;
+                        return (
+                            <div
+                                key={kpi.label}
+                                className="flex items-center gap-4 rounded-xl border bg-card p-5 shadow-sm"
                             >
-                                <kpi.icon className="size-5" />
-                            </span>
-                            <div className="min-w-0">
-                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                    {kpi.label}
-                                </p>
-                                <p className="truncate text-2xl font-extrabold tracking-tight">
-                                    {kpi.value}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                    {kpi.sub}
-                                </p>
+                                <span
+                                    className={cn(
+                                        'flex size-11 shrink-0 items-center justify-center rounded-lg',
+                                        kpi.tone,
+                                    )}
+                                >
+                                    <IconComponent className="size-5" />
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                        {kpi.label}
+                                    </p>
+                                    <p className="truncate text-2xl font-extrabold tracking-tight">
+                                        {kpi.value}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {kpi.sub}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
-                {/* Filters */}
+                {/* Search & Filters */}
                 <div className="space-y-4 rounded-xl border bg-card p-4 shadow-sm">
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 xl:pb-0">
@@ -283,22 +292,18 @@ export default function Index({
                             >
                                 All
                             </StatusFilterButton>
-                            {Object.entries(orderStatuses).map(
-                                ([value, label]) => (
-                                    <StatusFilterButton
-                                        key={value}
-                                        active={selectedStatus === value}
-                                        onClick={() => setSelectedStatus(value)}
-                                        dot={STATUS_STYLES[value]
-                                            ?.split(' ')
-                                            .find((token) =>
-                                                token.startsWith('text-'),
-                                            )}
-                                    >
-                                        {label}
-                                    </StatusFilterButton>
-                                ),
-                            )}
+                            {Object.entries(orderStatuses).map(([value, label]) => (
+                                <StatusFilterButton
+                                    key={value}
+                                    active={selectedStatus === value}
+                                    onClick={() => setSelectedStatus(value)}
+                                    dot={STATUS_STYLES[value]
+                                        ?.split(' ')
+                                        .find((token) => token.startsWith('text-'))}
+                                >
+                                    {label}
+                                </StatusFilterButton>
+                            ))}
                         </div>
 
                         <div className="relative w-full xl:w-80">
@@ -307,9 +312,7 @@ export default function Index({
                                 type="text"
                                 placeholder="Search order ID or customer..."
                                 value={searchTerm}
-                                onChange={(event) =>
-                                    setSearchTerm(event.target.value)
-                                }
+                                onChange={(event) => setSearchTerm(event.target.value)}
                                 className="h-9 w-full rounded-md border border-input bg-background pr-9 pl-9 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             />
                             {searchTerm && (
@@ -325,41 +328,22 @@ export default function Index({
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
-                        <span className="mr-1 text-xs font-medium text-muted-foreground">
-                            Date
-                        </span>
-                        {DATE_FILTERS.map((filter) => (
-                            <button
-                                key={filter.value}
-                                type="button"
-                                onClick={() => setSelectedDate(filter.value)}
-                                className={cn(
-                                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                                    selectedDate === filter.value
-                                        ? 'border-slate-900 bg-slate-900 text-white'
-                                        : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                )}
-                            >
-                                {filter.label}
-                            </button>
-                        ))}
-                    </div>
+                            
                 </div>
 
+                {/* Table Data Section */}
                 <div className="flex-1">
-                    <div className="flex-1">
-                        <div className="container mx-auto py-6">
-                            <DataTable
-                                columns={orderColumns}
-                                data={orderUsers.data || []}
-                            />
-                            <Pagination links={orderUsers.links} />
-                        </div>
+                    <div className="container mx-auto py-6">
+                        <DataTable
+                            columns={orderColumns}
+                            data={orderUsers.data || []}
+                        />
+                        <Pagination links={orderUsers.links} />
                     </div>
                 </div>
             </div>
 
+            {/* Order Details Drawer / Modal */}
             <OrderDetail
                 selectedOrder={selectedOrder}
                 setSelectedOrderId={setSelectedOrderId}
@@ -367,43 +351,86 @@ export default function Index({
                 orderTypeLabel={orderTypeLabel}
             />
 
+            {/* STEP 1: Update Payment Modal */}
+            <Dialog
+                open={updatingOrderId !== null}
+                onOpenChange={(open) => !open && setUpdatingOrderId(null)}
+            >
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>Update Payment Information</DialogTitle>
+                        <DialogDescription>
+                            Select the payment status and method before generating the receipt bill.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="grid gap-4 py-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment_status">Payment Status</Label>
+                            <Select
+                                value={paymentStatus}
+                                onValueChange={setPaymentStatus}
+                            >
+                                <SelectTrigger id="payment_status">
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="paid">Paid</SelectItem>
+                                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="payment_method">Payment Method</Label>
+                            <Select
+                                value={paymentMethod}
+                                onValueChange={setPaymentMethod}
+                            >
+                                <SelectTrigger id="payment_method">
+                                    <SelectValue placeholder="Select method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="cash_at_reception">Cash</SelectItem>
+                                    <SelectItem value="card">Card / POS</SelectItem>
+                                    <SelectItem value="esewa">eSewa</SelectItem>
+                                    <SelectItem value="khalti">Khalti</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setUpdatingOrderId(null)}
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveAndPrintBill}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Saving...' : 'Save & Print Bill'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* STEP 2: Bill Receipt Modal */}
             <Dialog
                 open={selectedBillOrderId !== null}
                 onOpenChange={(open) => !open && setSelectedBillOrderId(null)}
             >
-                <DialogContent className="flex flex-col items-center max-w-sm overflow-y-auto max-h-[90vh]">
+                <DialogContent className="flex max-h-[90vh] max-w-sm flex-col items-center overflow-y-auto">
                     <AdminBillReceipt
                         order={selectedBillOrder}
-                       officeSetting={officeSetting}
+                        officeSetting={officeSetting}
                     />
                 </DialogContent>
             </Dialog>
-
         </>
-    );
-}
-
-
-
-function OrderTotal({
-    label,
-    value,
-    emphasized = false,
-}: {
-    label: string;
-    value: number;
-    emphasized?: boolean;
-}) {
-    return (
-        <div
-            className={cn(
-                'flex justify-between',
-                emphasized && 'text-base font-bold',
-            )}
-        >
-            <span>{label}</span>
-            <span>{Money(value)}</span>
-        </div>
     );
 }
 
