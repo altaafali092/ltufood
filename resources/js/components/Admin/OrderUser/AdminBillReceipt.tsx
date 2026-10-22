@@ -2,25 +2,17 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { OrderUser } from '@/types/admin/Order';
-import { User } from '@/types';
 import { OfficeSetting } from '@/types/admin/OfficeSetting';
-import { usePage } from '@inertiajs/react';
-
-
 
 interface AdminBillReceiptProps {
     order: OrderUser | null;
-    officeSetting: OfficeSetting
-  
+    officeSetting: OfficeSetting;
 }
 
 export default function AdminBillReceipt({
     order,
-    officeSetting
-   
+    officeSetting,
 }: AdminBillReceiptProps) {
-    
-    console.log(officeSetting)
     if (!order) return null;
 
     const handlePrint = () => {
@@ -56,9 +48,11 @@ export default function AdminBillReceipt({
                 {/* Header */}
                 <div className="space-y-1 text-center">
                     <h1 className="text-base font-extrabold tracking-wide">
-                        {officeSetting.office_name}
+                        {officeSetting?.office_name}
                     </h1>
-                    <p className="text-[11px] text-gray-700">{officeSetting.office_address}</p>
+                    <p className="text-[11px] text-gray-700">
+                        {officeSetting?.office_address}
+                    </p>
                     <p className="pt-1 font-bold">
                         BILL NO: {order.order_number || `#${order.id}`}
                     </p>
@@ -116,7 +110,9 @@ export default function AdminBillReceipt({
                                 <span className="w-1/2 text-left">ITEM</span>
                                 <span className="w-1/6 text-center">1</span>
                                 <span className="w-1/6 text-right">0.00</span>
-                                <span className="w-1/6 text-right font-medium">0.00</span>
+                                <span className="w-1/6 text-right font-medium">
+                                    0.00
+                                </span>
                             </div>
                         )}
                     </div>
@@ -132,17 +128,10 @@ export default function AdminBillReceipt({
                         <span>Rs. {subtotal.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span>CGST @ 5%</span>
+                        <span>VAT</span>
                         <span>Rs. {(taxAmount / 2).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
-                        <span>SGST @ 5%</span>
-                        <span>Rs. {(taxAmount / 2).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-[10px]">
-                        <span>( + ) PETC ROUNDED</span>
-                        <span>Rs. 0.00</span>
-                    </div>
+
                 </div>
 
                 {/* Dashed Separator */}
@@ -163,7 +152,7 @@ export default function AdminBillReceipt({
                         ABOVE PRICES INCLUDE TAXES
                     </p>
                     <div className="flex justify-between font-semibold">
-                        <span>TOTAL GST</span>
+                        <span>TOTAL VAT</span>
                         <span>Rs. {taxAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-semibold">
@@ -189,15 +178,19 @@ export default function AdminBillReceipt({
                     <div className="space-y-1 pt-1 text-center font-bold">
                         <p>THANKS FOR YOUR VISIT! HAPPY JOURNEY</p>
                         <p>{new Date().toLocaleString()}</p>
-                        {/* <p>
-                            bill Printed by:{auth?.user?.name}
-                        </p> */}
+                    </div>
+                    <div className="space-y-1 pt-1 text-center font-bold">
+                        <div className="space-y-1 pt-1 text-center font-bold">
+                            <p>
+                                Bill prepared By: {order?.updated_by?.name || 'N/A'}
+                            </p>
+                        </div>
 
                     </div>
                 </div>
             </div>
 
-            {/* Print Button inside Modal */}
+            {/* Print Button */}
             <Button
                 type="button"
                 onClick={handlePrint}
@@ -207,29 +200,40 @@ export default function AdminBillReceipt({
                 <span>Print Bill</span>
             </Button>
 
-            {/* Thermal Print Media Query */}
-            <style dangerouslySetInnerHTML={{
-                __html: `
+            {/* Thermal Print Media Query Fixes */}
+            <style
+                dangerouslySetInnerHTML={{
+                    __html: `
                     @media print {
+                        @page {
+                            size: 80mm auto;
+                            margin: 0;
+                        }
                         body * {
-                            visibility: hidden;
+                            visibility: hidden !important;
                         }
                         .receipt-print-area,
                         .receipt-print-area * {
-                            visibility: visible;
+                            visibility: visible !important;
                         }
                         .receipt-print-area {
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            width: 80mm;
-                            padding: 0;
+                            position: fixed !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            width: 80mm !important;
+                            max-height: none !important;
+                            overflow: visible !important;
+                            padding: 4mm !important;
+                            margin: 0 !important;
                             box-shadow: none !important;
                             border: none !important;
+                            background: white !important;
+                            z-index: 99999 !important;
                         }
                     }
-                `
-            }} />
+                `,
+                }}
+            />
         </div>
     );
 }

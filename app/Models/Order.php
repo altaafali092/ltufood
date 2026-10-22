@@ -45,6 +45,7 @@ class Order extends Model
 
     use FileTrait, HasFactory, SoftDeletes;
 
+    protected $guarded = ['id'];
     protected $casts = [
         'subtotal'        => 'decimal:2',
         'discount_amount' => 'decimal:2',
@@ -103,7 +104,7 @@ class Order extends Model
     {
         $this->loadMissing('items');
 
-        $this->subtotal = $this->items->sum(fn ($item) => $item->quantity * $item->price_at_time);
+        $this->subtotal = $this->items->sum(fn($item) => $item->quantity * $item->price_at_time);
 
         // Total = (Subtotal - Discount) + Tax
         $this->total = ($this->subtotal - $this->discount_amount) + $this->tax_amount;
@@ -123,7 +124,7 @@ class Order extends Model
 
         $signedFieldNames = 'total_amount,transaction_uuid,product_code';
         $signatureString = "total_amount={$totalAmount},transaction_uuid={$transactionUuid},product_code={$merchantCode}";
-        
+
         $signature = base64_encode(hash_hmac('sha256', $signatureString, $secretKey, true));
 
         return [

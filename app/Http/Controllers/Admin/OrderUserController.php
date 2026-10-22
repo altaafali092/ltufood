@@ -16,69 +16,54 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class OrderUserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $search = $request->input('search');
-        $status = $request->input('status', 'all');
-        $date = $request->input('date', 'all');
+        $search = $request->string('search')->trim()->value();
+        $status = $request->string('status', 'all')->value();
 
-        // Summary stats calculated directly in database
         $stats = [
             'totalOrders' => Order::count(),
             'pendingOrders' => Order::where('status', OrderStatusEnum::Preparing->value)->count(),
             'completedOrders' => Order::where('status', OrderStatusEnum::Served->value)->count(),
-            'totalRevenue' => Order::where('payment_status', 'paid')->sum('total'),
+            'totalRevenue' => (float) Order::where('payment_status', 'paid')->sum('total'),
         ];
 
-        // Filtered orders query
-        $orderUsers = Order::with(['customer', 'table', 'items.foodItem'])
-            ->when($search, function ($query, $search) {
+       
+        $orderUsers = Order::query()
+            ->with(['customer', 'table', 'items.foodItem', 'updatedBy'])
+            ->when($search, function ($query, string $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('order_number', 'like', "%{$search}%")
-                        ->orWhereHas('customer', function ($cq) use ($search) {
-                            $cq->where('name', 'like', "%{$search}%");
-                        });
+                        ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"));
                 });
             })
-            ->when($status && $status !== 'all', function ($query) use ($status) {
-                $query->where('status', $status);
-            })
-            ->when($date && $date !== 'all', function ($query) use ($date) {
-                match ($date) {
-                    'today' => $query->whereDate('created_at', today()),
-                    'yesterday' => $query->whereDate('created_at', today()->subDay()),
-                    'week' => $query->whereBetween('created_at', [today()->startOfWeek(), today()->endOfWeek()]),
-                    default => $query,
-                };
-            })
+            ->when($status !== 'all', fn ($query) => $query->where('status', $status))
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
+
+            $orderTables = Table::orderBy('table_number')->get(['id', 'table_number']);
+            $orderFoodItems = FoodItem::where('status', true)->orderBy('title')->get(['id', 'title', 'price']);
+            $orderCustomers = User::orderBy('name')->get(['id', 'name', 'phone', 'email']);
 
         return Inertia::render('Admin/Order/Index', [
             'orderUsers' => $orderUsers,
             'orderStatuses' => OrderStatusEnum::labels(),
             'filters' => [
-                'search' => $search ?? '',
-                'status' => $status ?? 'all',
-                'date' => $date ?? 'all',
+                'search' => $search,
+                'status' => $status,
             ],
             'stats' => $stats,
-            'orderTables' => Table::query()
-                ->orderBy('table_number')
-                ->get(['id', 'table_number']),
-            'orderFoodItems' => FoodItem::query()
-                ->where('status', true)
-                ->orderBy('title')
-                ->get(['id', 'title', 'price']),
-            'orderCustomers' => User::query()
-                ->orderBy('name')
-                ->get(['id', 'name', 'phone', 'email']),
+            'orderTables' => $orderTables,
+            'orderFoodItems' => $orderFoodItems,
+            'orderCustomers' => $orderCustomers,
         ]);
     }
 

@@ -33,7 +33,6 @@ import Pagination from '@/components/Pagination';
 import OrderDetail from '@/components/Admin/OrderUser/OrderDetail';
 import AdminBillReceipt from '@/components/Admin/OrderUser/AdminBillReceipt';
 
-import { updateStatus } from '@/actions/App/Http/Controllers/OrderController';
 import userOrders from '@/routes/admin/userOrders';
 import { orderBillStatus } from '@/routes/admin';
 
@@ -57,7 +56,6 @@ interface OrderProps {
     filters: {
         search: string;
         status: string;
-        date: string;
     };
     stats: StatsProps;
     orderTables: Array<{ id: number; table_number: string }>;
@@ -70,7 +68,6 @@ interface OrderProps {
     }>;
     officeSetting: OfficeSetting;
 }
-
 
 
 const STATUS_STYLES: Record<string, string> = {
@@ -100,7 +97,7 @@ export default function Index({
     const [selectedStatus, setSelectedStatus] = useState<string>(
         filters.status || 'all',
     );
-  
+   
 
     const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
     const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
@@ -110,7 +107,11 @@ export default function Index({
     const [paymentMethod, setPaymentMethod] = useState<string>('cash_at_reception');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const isFirstRender = useRef(true);
+    // Track previous filter state to prevent triggering on page changes
+    const prevFiltersRef = useRef({
+        search: filters.search || '',
+        status: filters.status || 'all',
+    });
 
     const selectedOrder = useMemo(
         () => orderUsers.data.find((order) => order.id === selectedOrderId) ?? null,
@@ -122,7 +123,6 @@ export default function Index({
         [orderUsers, selectedBillOrderId],
     );
 
-    // Triggered when user clicks "Print Bill"
     const handleInitiatePrintBill = (order: OrderUser) => {
         if (order.payment_status === 'paid' && order.updated_by !== null) {
             setSelectedBillOrderId(order.id);
@@ -133,7 +133,6 @@ export default function Index({
         setPaymentMethod(order.payment_method || 'cash_at_reception');
     };
 
-    // Submits payment updates and then triggers the bill receipt
     const handleSaveAndPrintBill = () => {
         if (!updatingOrderId) return;
         setIsSubmitting(true);
@@ -168,20 +167,30 @@ export default function Index({
         [],
     );
 
-    // Filter and search query handler using Wayfinder route builder
+    // Filter effect that only triggers on actual user input changes
     useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
+        const prev = prevFiltersRef.current;
+        const hasFilterChanged =
+            prev.search !== searchTerm ||
+            prev.status !== selectedStatus;
+
+        if (!hasFilterChanged) {
             return;
         }
 
         const timer = setTimeout(() => {
+            // Update ref before navigating
+            prevFiltersRef.current = {
+                search: searchTerm,
+                status: selectedStatus,
+             
+            };
+
             router.get(
                 userOrders.index({
                     query: {
                         search: searchTerm,
                         status: selectedStatus,
-                       
                     },
                 }).url,
                 {},
@@ -328,7 +337,7 @@ export default function Index({
                         </div>
                     </div>
 
-                            
+                   
                 </div>
 
                 {/* Table Data Section */}
@@ -423,7 +432,7 @@ export default function Index({
                 open={selectedBillOrderId !== null}
                 onOpenChange={(open) => !open && setSelectedBillOrderId(null)}
             >
-                <DialogContent className="flex max-h-[90vh] max-w-sm flex-col items-center overflow-y-auto">
+                <DialogContent className="flex max-h-[90vh] max-w-sm flex-col items-center overflow-y-auto print:hidden">
                     <AdminBillReceipt
                         order={selectedBillOrder}
                         officeSetting={officeSetting}
