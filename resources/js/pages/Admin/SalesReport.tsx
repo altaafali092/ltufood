@@ -2,10 +2,12 @@ import { router } from '@inertiajs/react';
 import { Download, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 
+import Pagination from '@/components/Pagination';
 import AppLayout from '@/layouts/app-layout';
 import salesReport from '@/routes/admin/sales-report';
+import type { PaginatedData } from '@/types';
 
-type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly';
+type Period = 'weekly' | 'monthly' | 'yearly';
 
 interface ReportRow {
     label: string;
@@ -18,63 +20,71 @@ interface ReportRow {
 interface SalesReportProps {
     period: Period;
     report: {
-        rows: ReportRow[];
+        rows: PaginatedData<ReportRow>;
         total_orders: number;
         total_sales: number;
     };
 }
 
 const periodLabels: Record<Period, string> = {
-    daily: 'Daily',
     weekly: 'Weekly',
     monthly: 'Monthly',
-    quarterly: 'Quarterly',
+    yearly: 'Yearly',
 };
+
+const periods = Object.keys(periodLabels) as Period[];
 
 export default function SalesReport({ period, report }: SalesReportProps) {
     const [selectedPeriod, setSelectedPeriod] = useState<Period>(period);
 
     const changePeriod = (nextPeriod: Period) => {
         setSelectedPeriod(nextPeriod);
-        router.get(salesReport.index({ query: { period: nextPeriod } }).url, {}, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            salesReport.index({ query: { period: nextPeriod } }).url,
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
     return (
         <div className="min-h-screen bg-gray-50 p-6 text-gray-800">
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <TrendingUp className="size-6 text-emerald-600" />
-                        <h1 className="text-2xl font-bold text-gray-900">Sales Report</h1>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">Track paid sales across daily, weekly, monthly, and quarterly periods.</p>
+            <div className="mb-6">
+                <div className="flex items-center gap-2">
+                    <TrendingUp className="size-6 text-emerald-600" />
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        Sales Report
+                    </h1>
                 </div>
-                <a
-                    href={salesReport.export({ query: { period: selectedPeriod } }).url}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
-                >
-                    <Download className="size-4" />
-                    Download Excel sheet
-                </a>
+                <p className="mt-1 text-sm text-gray-500">
+                    Track paid sales across weekly, monthly, and yearly periods.
+                </p>
             </div>
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Total sales</p>
-                    <p className="mt-1 text-2xl font-extrabold text-emerald-600">NPR {report.total_sales.toLocaleString()}</p>
+                    <p className="text-xs font-medium tracking-wider text-gray-400 uppercase">
+                        Total sales
+                    </p>
+                    <p className="mt-1 text-2xl font-extrabold text-emerald-600">
+                        NPR {report.total_sales.toLocaleString()}
+                    </p>
                 </div>
                 <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-                    <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Paid orders</p>
-                    <p className="mt-1 text-2xl font-extrabold text-gray-900">{report.total_orders.toLocaleString()}</p>
+                    <p className="text-xs font-medium tracking-wider text-gray-400 uppercase">
+                        Paid orders
+                    </p>
+                    <p className="mt-1 text-2xl font-extrabold text-gray-900">
+                        {report.total_orders.toLocaleString()}
+                    </p>
                 </div>
             </div>
 
             <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
                 <div className="flex flex-wrap gap-2 border-b border-gray-100 p-4">
-                    {(Object.keys(periodLabels) as Period[]).map((option) => (
+                    {periods.map((option) => (
                         <button
                             key={option}
                             type="button"
@@ -91,28 +101,59 @@ export default function SalesReport({ period, report }: SalesReportProps) {
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-gray-600">
-                        <thead className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <thead className="border-b border-gray-100 bg-gray-50 text-xs font-semibold tracking-wider text-gray-500 uppercase">
                             <tr>
                                 <th className="px-6 py-4">Period</th>
                                 <th className="px-6 py-4">Start date</th>
                                 <th className="px-6 py-4">End date</th>
                                 <th className="px-6 py-4">Orders</th>
                                 <th className="px-6 py-4 text-right">Sales</th>
+                                <th className="px-6 py-4 text-right">Report</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {report.rows.map((row) => (
-                                <tr key={`${row.start_date}-${row.end_date}`} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 font-medium text-gray-900">{row.label}</td>
-                                    <td className="px-6 py-4">{row.start_date}</td>
-                                    <td className="px-6 py-4">{row.end_date}</td>
+                            {report.rows.data.map((row) => (
+                                <tr
+                                    key={`${row.start_date}-${row.end_date}`}
+                                    className="hover:bg-gray-50"
+                                >
+                                    <td className="px-6 py-4 font-medium text-gray-900">
+                                        {row.label}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {row.start_date}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {row.end_date}
+                                    </td>
                                     <td className="px-6 py-4">{row.orders}</td>
-                                    <td className="px-6 py-4 text-right font-semibold text-gray-900">NPR {Number(row.sales).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right font-semibold text-gray-900">
+                                        NPR {Number(row.sales).toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <a
+                                            href={
+                                                salesReport.export({
+                                                    query: {
+                                                        period: selectedPeriod,
+                                                        start: row.start_date,
+                                                        end: row.end_date,
+                                                    },
+                                                }).url
+                                            }
+                                            title={`Download report for ${row.label} as Excel`}
+                                            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+                                        >
+                                            <Download className="size-3.5" />
+                                            Download
+                                        </a>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+                <Pagination links={report.rows.links} />
             </div>
         </div>
     );

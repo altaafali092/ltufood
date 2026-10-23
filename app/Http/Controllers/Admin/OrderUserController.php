@@ -20,9 +20,6 @@ use Inertia\Response;
 
 class OrderUserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request): Response
     {
         $search = $request->string('search')->trim()->value();
@@ -35,7 +32,6 @@ class OrderUserController extends Controller
             'totalRevenue' => (float) Order::where('payment_status', 'paid')->sum('total'),
         ];
 
-       
         $orderUsers = Order::query()
             ->with(['customer', 'table', 'items.foodItem', 'updatedBy'])
             ->when($search, function ($query, string $search) {
@@ -49,9 +45,9 @@ class OrderUserController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-            $orderTables = Table::orderBy('table_number')->get(['id', 'table_number']);
-            $orderFoodItems = FoodItem::where('status', true)->orderBy('title')->get(['id', 'title', 'price']);
-            $orderCustomers = User::orderBy('name')->get(['id', 'name', 'phone', 'email']);
+        $orderTables = Table::orderBy('table_number')->get(['id', 'table_number']);
+        $orderFoodItems = FoodItem::where('status', true)->orderBy('title')->get(['id', 'title', 'price']);
+        $orderCustomers = User::orderBy('name')->get(['id', 'name', 'phone', 'email']);
 
         return Inertia::render('Admin/Order/Index', [
             'orderUsers' => $orderUsers,

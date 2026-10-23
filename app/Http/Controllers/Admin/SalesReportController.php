@@ -4,54 +4,119 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\XlsxWriter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SalesReportController extends Controller
 {
-    private const PERIODS = ['daily', 'weekly', 'monthly', 'quarterly'];
+    private const PERIODS = ['weekly', 'monthly', 'yearly'];
 
     public function index(Request $request): Response
     {
         $period = $this->period($request);
         $report = $this->buildReport($period);
 
+        $perPage = 10;
+        $page = max(1, $request->integer('page', 1));
+
+        $rows = new LengthAwarePaginator(
+            array_slice($report['rows'], ($page - 1) * $perPage, $perPage),
+            count($report['rows']),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
+
         return Inertia::render('Admin/SalesReport', [
             'period' => $period,
-            'report' => $report,
+            'report' => [
+                'rows' => $rows,
+                'total_orders' => $report['total_orders'],
+                'total_sales' => $report['total_sales'],
+            ],
         ]);
     }
 
-    public function export(Request $request)
+    public function export(Request $request): HttpResponse
     {
-        $period = $this->period($request);
-        $report = $this->buildReport($period);
-        $filename = 'sales-report-'.$period.'-'.now()->format('Y-m-d').'.csv';
-
-        return response()->streamDownload(function () use ($report): void {
-            $handle = fopen('php://output', 'w');
-
-            fputcsv($handle, ['Sales Report']);
-            fputcsv($handle, ['Period', 'Start Date', 'End Date', 'Orders', 'Sales (NPR)']);
-
-            foreach ($report['rows'] as $row) {
-                fputcsv($handle, [
-                    $row['label'],
-                    $row['start_date'],
-                    $row['end_date'],
-                    $row['orders'],
-                    $row['sales'],
-                ]);
-            }
-
-            fputcsv($handle, []);
-            fputcsv($handle, ['Total', '', '', $report['total_orders'], $report['total_sales']]);
-            fclose($handle);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+        $request->validate([
+            'start' => ['nullable', 'date'],
+            'end' => ['nullable', 'date'],
         ]);
+
+        $period = $this->period($request);
+        $start = $request->filled('start') ? Carbon::parse($request->string('start')->toString()) : null;
+        $end = $request->filled('end') ? Carbon::parse($request->string('end')->toString()) : null;
+
+        $rows = $start && $end
+            ? [$this->rangeRow($period, $start, $end)]
+            : $this->buildReport($period)['rows'];
+
+        $data = collect($rows)->map(fn (array $row): array => [
+            $row['label'],
+            $row['start_date'],
+            $row['end_date'],
+            $row['orders'],
+            $row['sales'],
+        ])->all();
+
+        if (count($data) > 1) {
+            $data[] = [
+                'Total',
+                '',
+                '',
+                (int) collect($rows)->sum('orders'),
+                round((float) collect($rows)->sum('sales'), 2),
+            ];
+        }
+
+        $contents = (new XlsxWriter(
+            headings: ['Period', 'Start Date', 'End Date', 'Orders', 'Sales (NPR)'],
+            rows: $data,
+            sheetName: ucfirst($period).' Sales',
+        ))->build();
+
+        $filename = $start && $end
+            ? 'sales-report-'.$period.'-'.$start->toDateString().'-to-'.$end->toDateString().'.xlsx'
+            : 'sales-report-'.$period.'-'.now()->format('Y-m-d').'.xlsx';
+
+        return response($contents, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    /**
+     * @return array{label: string, start_date: string, end_date: string, orders: int, sales: float}
+     */
+    private function rangeRow(string $period, Carbon $start, Carbon $end): array
+    {
+        $orders = Order::query()
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'Cancelled')
+            ->whereBetween('created_at', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
+            ->latest()
+            ->get(['total']);
+
+        return [
+            'label' => match ($period) {
+                'weekly' => $start->format('M j').' - '.$end->format('M j, Y'),
+                'monthly' => $start->format('F Y'),
+                'yearly' => $start->format('Y'),
+            },
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'orders' => $orders->count(),
+            'sales' => round((float) $orders->sum('total'), 2),
+        ];
     }
 
     /**
@@ -83,7 +148,7 @@ class SalesReportController extends Controller
                 'orders' => $bucketOrders->count(),
                 'sales' => round((float) $bucketOrders->sum('total'), 2),
             ];
-        })->values()->all();
+        })->reverse()->values()->all();
 
         return [
             'period' => $period,
@@ -100,38 +165,33 @@ class SalesReportController extends Controller
     {
         $now = now();
         $count = match ($period) {
-            'daily' => 30,
             'weekly' => 12,
             'monthly' => 12,
-            'quarterly' => 8,
+            'yearly' => 5,
         };
         $start = match ($period) {
-            'daily' => $now->copy()->startOfDay()->subDays($count - 1),
             'weekly' => $now->copy()->startOfWeek()->subWeeks($count - 1),
             'monthly' => $now->copy()->startOfMonth()->subMonths($count - 1),
-            'quarterly' => $now->copy()->startOfQuarter()->subQuarters($count - 1),
+            'yearly' => $now->copy()->startOfYear()->subYears($count - 1),
         };
 
         return collect(range(0, $count - 1))->map(function (int $offset) use ($period, $start): array {
             $bucketStart = match ($period) {
-                'daily' => $start->copy()->addDays($offset)->startOfDay(),
                 'weekly' => $start->copy()->addWeeks($offset)->startOfWeek(),
                 'monthly' => $start->copy()->addMonths($offset)->startOfMonth(),
-                'quarterly' => $start->copy()->addQuarters($offset)->startOfQuarter(),
+                'yearly' => $start->copy()->addYears($offset)->startOfYear(),
             };
             $bucketEnd = match ($period) {
-                'daily' => $bucketStart->copy()->endOfDay(),
                 'weekly' => $bucketStart->copy()->endOfWeek(),
                 'monthly' => $bucketStart->copy()->endOfMonth(),
-                'quarterly' => $bucketStart->copy()->endOfQuarter(),
+                'yearly' => $bucketStart->copy()->endOfYear(),
             };
 
             return [
                 'label' => match ($period) {
-                    'daily' => $bucketStart->format('M j, Y'),
                     'weekly' => $bucketStart->format('M j').' - '.$bucketEnd->format('M j, Y'),
                     'monthly' => $bucketStart->format('F Y'),
-                    'quarterly' => 'Q'.$bucketStart->quarter.' '.$bucketStart->year,
+                    'yearly' => $bucketStart->format('Y'),
                 },
                 'start' => $bucketStart,
                 'end' => $bucketEnd,
@@ -143,6 +203,6 @@ class SalesReportController extends Controller
     {
         return in_array($request->string('period')->toString(), self::PERIODS, true)
             ? $request->string('period')->toString()
-            : 'daily';
+            : 'weekly';
     }
 }
